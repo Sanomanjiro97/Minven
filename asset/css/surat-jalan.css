@@ -1,0 +1,195 @@
+.surat-jalan-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+
+.header-logo {
+    height: 80px;
+    margin-right: 20px;
+}
+
+.company-info h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+    color: #2c3e50;
+}
+
+.company-info p {
+    margin: 5px 0;
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.surat-jalan-header {
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+}
+
+.surat-jalan-info {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.info-item {
+    margin-bottom: 10px;
+}
+
+.info-label {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.info-value {
+    color: #34495e;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.items-table th {
+    background-color: #3498db;
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-weight: bold;
+}
+
+.items-table td {
+    padding: 12px;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.items-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.signature-section {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid #bdc3c7;
+}
+
+.signature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.signature-box {
+    text-align: center;
+}
+
+.signature-line {
+    border-top: 1px solid #7f8c8d;
+    width: 200px;
+    margin: 20px auto;
+    padding-top: 40px;
+}
+
+.signature-label {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-top: 10px;
+}
+
+.signature-name {
+    color: #34495e;
+    font-size: 14px;
+}
+
+.action-buttons {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.print-only {
+    display: none;
+}
+
+@media print {
+    .surat-jalan-container {
+        box-shadow: none;
+        padding: 0;
+    }
+    
+    .action-buttons {
+        display: none;
+    }
+    
+    .print-only {
+        display: block;
+    }
+    
+    body {
+        background-color: white !important;
+    }
+    
+    .items-table {
+        page-break-inside: avoid;
+    }
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status-draft {
+    background-color: #f39c12;
+    color: white;
+}
+
+.status-sent {
+    background-color: #27ae60;
+    color: white;
+}
+
+.status-cancelled {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.quantity-input {
+    width: 80px;
+    text-align: center;
+}
+
+.total-row {
+    background-color: #ecf0f1;
+    font-weight: bold;
+}
+
+.total-row td {
+    border-top: 2px solid #bdc3c7;
+}

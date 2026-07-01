@@ -1,0 +1,70 @@
+[2026-02-10 15:58:11][info] Payment request received: {"GET":{"id":"188","_":"1770735487969"},"POST":[],"SESSION":["user_id","username","nama","role_id","success"],"USER_ID":7,"HTTP_METHOD":"GET","REMOTE_ADDR":"::1"}
+[2026-02-10 15:58:11][info] Session valid - user_id: 7
+[2026-02-10 15:58:11][info] Access check passed - user has payment completion access
+[2026-02-10 15:58:11][info] Processing payment for ID: 188
+[2026-02-10 15:58:11][info] Transaction started - autocommit disabled
+[2026-02-10 15:58:11][info] Database connection status: Connected
+[2026-02-10 15:58:11][info] Current purchase status: menunggu
+[2026-02-10 15:58:11][info] Status updated successfully
+[2026-02-10 15:58:11][info] Transaction committed successfully
+[2026-02-10 15:58:11][info] Success response sent
+[2026-02-10 15:58:43][info] Payment request received: {"GET":{"id":"189","_":"1770735519716"},"POST":[],"SESSION":["user_id","username","nama","role_id","success"],"USER_ID":7,"HTTP_METHOD":"GET","REMOTE_ADDR":"::1"}
+[2026-02-10 15:58:43][info] Session valid - user_id: 7
+[2026-02-10 15:58:43][info] Access check passed - user has payment completion access
+[2026-02-10 15:58:43][info] Processing payment for ID: 189
+[2026-02-10 15:58:43][info] Transaction started - autocommit disabled
+[2026-02-10 15:58:43][info] Database connection status: Connected
+[2026-02-10 15:58:43][info] Current purchase status: menunggu
+[2026-02-10 15:58:43][info] Status updated successfully
+[2026-02-10 15:58:43][info] Transaction committed successfully
+[2026-02-10 15:58:43][info] Success response sent
+[2026-02-10 16:09:23][info] Payment request received: {"GET":{"id":"191","_":"1770736160069"},"POST":[],"SESSION":["user_id","username","nama","role_id","success"],"USER_ID":7,"HTTP_METHOD":"GET","REMOTE_ADDR":"::1"}
+[2026-02-10 16:09:23][info] Session valid - user_id: 7
+[2026-02-10 16:09:23][info] Access check passed - user has payment completion access
+[2026-02-10 16:09:23][info] Processing payment for ID: 191
+[2026-02-10 16:09:23][info] Transaction started - autocommit disabled
+[2026-02-10 16:09:23][info] Database connection status: Connected
+[2026-02-10 16:09:23][info] Current purchase status: menunggu
+[2026-02-10 16:09:23][info] Status updated successfully
+[2026-02-10 16:09:23][info] Transaction committed successfully
+[2026-02-10 16:09:23][info] Success response sent
+[2026-02-10 16:10:57][info] Payment request received: {"GET":{"id":"192","_":"1770736254630"},"POST":[],"SESSION":["user_id","username","nama","role_id","success"],"USER_ID":7,"HTTP_METHOD":"GET","REMOTE_ADDR":"::1"}
+[2026-02-10 16:10:57][info] Session valid - user_id: 7
+[2026-02-10 16:10:57][info] Access check passed - user has payment completion access
+[2026-02-10 16:10:57][info] Processing payment for ID: 192
+[2026-02-10 16:10:57][info] Transaction started - autocommit disabled
+[2026-02-10 16:10:57][info] Database connection status: Connected
+[2026-02-10 16:10:57][info] Current purchase status: menunggu
+[2026-02-10 16:10:57][info] Status updated successfully
+[2026-02-10 16:10:57][info] Transaction committed successfully
+[2026-02-10 16:10:57][info] Success response sent
+[2026-02-10 18:13:05][info] Payment request received: {"GET":{"id":"193","_":"1770743582378"},"POST":[],"SESSION":["user_id","username","nama","role_id","success"],"USER_ID":39,"HTTP_METHOD":"GET","REMOTE_ADDR":"::1"}
+[2026-02-10 18:13:05][info] Session valid - user_id: 39
+[2026-02-10 18:13:05][info] Access check passed - user has payment completion access
+[2026-02-10 18:13:05][info] Processing payment for ID: 193
+[2026-02-10 18:13:05][info] Transaction started - autocommit disabled
+[2026-02-10 18:13:05][info] Database connection status: Connected
+[2026-02-10 18:13:05][info] Current purchase status: menunggu
+[2026-02-10 18:13:05][info] Status updated successfully
+[2026-02-10 18:13:05][info] Transaction committed successfully
+[2026-02-10 18:13:05][info] Success response sent
+[2026-05-30 15:38:08][info] Payment request received: {"GET":{"id":"171","_":"1780148285188"},"POST":[],"SESSION":["user_id","username","nama","role_id","filter_pembelian_direct_index","success"],"USER_ID":7,"HTTP_METHOD":"GET","REMOTE_ADDR":"::1"}
+[2026-05-30 15:38:08][info] Session valid - user_id: 7
+[2026-05-30 15:38:08][info] Access check passed - user has payment completion access
+[2026-05-30 15:38:08][info] Processing payment for ID: 171
+[2026-05-30 15:38:08][info] Transaction started - autocommit disabled
+[2026-05-30 15:38:08][info] Database connection status: Connected
+[2026-05-30 15:38:08][info] Current purchase status: menunggu
+[2026-05-30 15:38:08][info] Status updated successfully
+[2026-05-30 15:38:08][info] Transaction committed successfully
+[2026-05-30 15:38:08][info] Success response sent
+[2026-06-03 20:33:23][info] Payment request received: {"GET":{"id":"172","_":"1780511596707"},"POST":[],"SESSION":["user_id","username","nama","role_id","filter_pembelian_direct_index","success"],"USER_ID":7,"HTTP_METHOD":"GET","REMOTE_ADDR":"::1"}
+[2026-06-03 20:33:23][info] Session valid - user_id: 7
+[2026-06-03 20:33:23][info] Access check passed - user has payment completion access
+[2026-06-03 20:33:23][info] Processing payment for ID: 172
+[2026-06-03 20:33:23][info] Transaction started - autocommit disabled
+[2026-06-03 20:33:23][info] Database connection status: Connected
+[2026-06-03 20:33:23][info] Current purchase status: menunggu
+[2026-06-03 20:33:23][info] Status updated successfully
+[2026-06-03 20:33:23][info] Transaction committed successfully
+[2026-06-03 20:33:23][info] Success response sent

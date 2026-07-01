@@ -1,0 +1,5 @@
+.vs/
+tmp_sessions/
+node_modules/
+vendor/
+.env
