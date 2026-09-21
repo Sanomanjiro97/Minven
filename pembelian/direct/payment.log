@@ -68,3 +68,33 @@
 [2026-06-03 20:33:23][info] Status updated successfully
 [2026-06-03 20:33:23][info] Transaction committed successfully
 [2026-06-03 20:33:23][info] Success response sent
+[2026-07-12 18:08:30][info] Payment request received: {"GET":{"id":"173","_":"1783872498304"},"POST":[],"SESSION":["user_id","username","nama","role_id","nama_role","filter_stok_masuk_index","filter_barang_index","filter_stok_adjustment_in_index","filter_pembelian_po_index","filter_pembelian_direct_index","success"],"USER_ID":7,"HTTP_METHOD":"GET","REMOTE_ADDR":"192.168.1.23"}
+[2026-07-12 18:08:30][info] Session valid - user_id: 7
+[2026-07-12 18:08:30][info] Access check passed - user has payment completion access
+[2026-07-12 18:08:30][info] Processing payment for ID: 173
+[2026-07-12 18:08:30][info] Transaction started - autocommit disabled
+[2026-07-12 18:08:30][info] Database connection status: Connected
+[2026-07-12 18:08:30][info] Current purchase status: menunggu
+[2026-07-12 18:08:30][info] Status updated successfully
+[2026-07-12 18:08:30][info] Transaction committed successfully
+[2026-07-12 18:08:30][info] Success response sent
+[2026-07-12 18:23:51][info] Payment request received: {"GET":{"id":"174","_":"1783872628771"},"POST":[],"SESSION":["user_id","username","nama","role_id","nama_role","filter_stok_masuk_index","filter_barang_index","filter_stok_adjustment_in_index","filter_pembelian_po_index","filter_pembelian_direct_index","success"],"USER_ID":7,"HTTP_METHOD":"GET","REMOTE_ADDR":"192.168.1.23"}
+[2026-07-12 18:23:51][info] Session valid - user_id: 7
+[2026-07-12 18:23:51][info] Access check passed - user has payment completion access
+[2026-07-12 18:23:51][info] Processing payment for ID: 174
+[2026-07-12 18:23:51][info] Transaction started - autocommit disabled
+[2026-07-12 18:23:51][info] Database connection status: Connected
+[2026-07-12 18:23:51][info] Current purchase status: menunggu
+[2026-07-12 18:23:51][info] Status updated successfully
+[2026-07-12 18:23:51][info] Transaction committed successfully
+[2026-07-12 18:23:51][info] Success response sent
+[2026-07-12 18:24:55][info] Payment request received: {"GET":{"id":"175","_":"1783873483889"},"POST":[],"SESSION":["user_id","username","nama","role_id","nama_role","filter_stok_masuk_index","filter_barang_index","filter_stok_adjustment_in_index","filter_pembelian_po_index","filter_pembelian_direct_index","success"],"USER_ID":7,"HTTP_METHOD":"GET","REMOTE_ADDR":"192.168.1.23"}
+[2026-07-12 18:24:55][info] Session valid - user_id: 7
+[2026-07-12 18:24:55][info] Access check passed - user has payment completion access
+[2026-07-12 18:24:55][info] Processing payment for ID: 175
+[2026-07-12 18:24:55][info] Transaction started - autocommit disabled
+[2026-07-12 18:24:55][info] Database connection status: Connected
+[2026-07-12 18:24:55][info] Current purchase status: menunggu
+[2026-07-12 18:24:55][info] Status updated successfully
+[2026-07-12 18:24:55][info] Transaction committed successfully
+[2026-07-12 18:24:55][info] Success response sent

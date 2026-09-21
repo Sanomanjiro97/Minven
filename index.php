@@ -8,37 +8,28 @@ if (!$authConn) {
     $authConn = $conn;
 }
 
-// Ambil daftar role dari database
-$roles = [];
-$sql = "SELECT id, nama_role FROM roles";
-$result = $authConn->query($sql);
-while ($row = $result->fetch_assoc()) {
-    $roles[$row['id']] = $row['nama_role'];
-}
-
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
-    $role_id = (int)($_POST['role_id'] ?? 0);
     
-    // Query yang diperbaiki untuk mengecek user dan role
+    // Query mengambil data user beserta role-nya berdasarkan username
     $sql = "SELECT u.*, ur.role_id, r.nama_role
             FROM users u 
             JOIN user_roles ur ON u.id = ur.user_id 
             JOIN roles r ON ur.role_id = r.id
-            WHERE u.username = ? AND ur.role_id = ?";
+            WHERE u.username = ? LIMIT 1";
+            
     $stmt = $authConn->prepare($sql);
     if ($stmt === false) {
         die("Error preparing statement: " . $authConn->error);
     }
-    $stmt->bind_param('si', $username, $role_id);
+    $stmt->bind_param('s', $username);
     $stmt->execute();
     $result = $stmt->get_result();
     
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
         if (password_verify($password, $user['password'])) {
-            // Cek status user aktif atau tidak
             if ($user['is_active'] == 1) {
                 session_regenerate_id(true);
                 $_SESSION['user_id'] = $user['id'];
@@ -49,14 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 header("Location: dashboard.php");
                 exit();
             } else {
-                // User tidak aktif
                 $error = "User inaktif harap hubungi administrator!";
             }
         } else {
-            $error = "Username, password atau role salah!";
+            $error = "Username atau password salah!";
         }
     } else {
-        $error = "Username, password atau role salah!";
+        $error = "Username atau password salah!";
     }
 }
 ?>
@@ -91,8 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .login-split-container {
             display: flex;
             width: 100%;
-            max-width: 900px; /* Lebar total container */
-            min-height: 550px; /* Tinggi minimum container */
+            max-width: 900px;
+            height: 550px; /* Diubah dari min-height ke height statis agar ukuran box luar mengunci kaku */
             background: #ffffff;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
@@ -104,12 +94,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             padding: 50px;
             display: flex;
             flex-direction: column;
+            justify-content: space-between; /* Membuat konten terdistribusi rata atas-bawah */
+            height: 100%;
+        }
+
+        .login-form-inner {
+            display: flex;
+            flex-direction: column;
             justify-content: center;
+            flex-grow: 1; /* Mengisi ruang kosong agar form tetap presisi di tengah */
         }
 
         .login-welcome-section {
             flex: 1;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); /* Gradien biru tua */
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: #ffffff;
             display: flex;
             flex-direction: column;
@@ -117,6 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             justify-content: center;
             padding: 20px;
             text-align: center;
+            height: 100%;
         }
 
         .login-welcome-section .logo-img {
@@ -194,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             margin-bottom: 5px;
         }
 
-        .form-control, .form-select {
+        .form-control {
             border: 1px solid #ced4da;
             border-radius: 8px;
             padding: 10px 15px;
@@ -204,20 +203,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         @supports (-webkit-touch-callout: none) {
-            input, select, textarea, .form-control, .form-select {
+            input, .form-control {
                 font-size: 16px;
             }
         }
         
-        .form-control:focus, .form-select:focus {
+        .form-control:focus {
             border-color: #007bff;
             box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
         }
 
-        .input-group .form-control {
-            margin-bottom: 0;
-        }
-        
         .btn-login {
             background-color: #007bff;
             border: none;
@@ -235,24 +230,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         .copyright-footer {
-            margin-top: 2rem;
+            margin-top: auto; /* Memastikan footer copyright selalu terdorong paling bawah form section */
             text-align: center;
             font-size: 0.85rem;
             color: #555;
             width: 100%;
+            padding-top: 20px;
         }
 
-        .copyright-footer a {
-            color: #007bff;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .copyright-footer a:hover {
-            text-decoration: underline;
-        }
-
-        /* Responsive adjustments for Tablets and Mobile */
         @media (max-width: 992px) {
             body {
                 padding: 20px;
@@ -263,11 +248,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
 
             .login-split-container {
-                flex-direction: column-reverse; /* Welcome section on top */
-                max-width: 600px; /* Wider for tablets */
+                flex-direction: column-reverse;
+                max-width: 600px;
                 margin: 0 auto;
                 height: auto;
-                min-height: auto;
                 background: rgba(10, 15, 26, 0.72);
                 border: 1px solid rgba(255, 255, 255, 0.12);
                 box-shadow: 0 18px 55px rgba(0, 0, 0, 0.42);
@@ -278,6 +262,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             .login-welcome-section {
                 padding: 40px 20px;
                 min-height: 200px;
+                height: auto;
                 background: radial-gradient(circle at 20% 10%, rgba(11, 102, 255, 0.42) 0%, rgba(11, 102, 255, 0.0) 52%),
                             radial-gradient(circle at 80% 0%, rgba(139, 92, 246, 0.34) 0%, rgba(139, 92, 246, 0.0) 58%),
                             linear-gradient(135deg, rgba(15, 23, 42, 0.42) 0%, rgba(10, 15, 26, 0.1) 100%);
@@ -285,14 +270,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
 
             .login-welcome-section .logo-img {
-                width: 100px; /* Smaller logo on mobile/tablet */
-                max-width: 100%;
+                width: 100px;
             }
 
             .login-form-section {
                 padding: 40px 30px;
                 background: transparent;
                 color: rgba(255, 255, 255, 0.92);
+                height: auto;
             }
 
             .login-form-section h2 {
@@ -303,7 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 color: rgba(255, 255, 255, 0.78);
             }
 
-            .form-control, .form-select {
+            .form-control {
                 background: rgba(255, 255, 255, 0.06);
                 border-color: rgba(255, 255, 255, 0.14);
                 color: rgba(255, 255, 255, 0.92);
@@ -313,7 +298,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 color: rgba(255, 255, 255, 0.55);
             }
 
-            .form-control:focus, .form-select:focus {
+            .form-control:focus {
                 border-color: rgba(11, 102, 255, 0.85);
                 box-shadow: 0 0 0 0.2rem rgba(11, 102, 255, 0.25);
             }
@@ -329,14 +314,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             .copyright-footer {
                 color: rgba(255, 255, 255, 0.72);
-            }
-
-            .copyright-footer a {
-                color: rgba(255, 255, 255, 0.9);
+                margin-top: 2rem;
             }
         }
 
-        /* Specific Mobile adjustments */
         @media (max-width: 576px) {
             body {
                 padding: 10px;
@@ -380,58 +361,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <script>
         (function minvenPageLoaderInit() {
             const LOADER_ID = 'minven-page-loader';
-
             const show = () => {
                 const el = document.getElementById(LOADER_ID);
                 if (!el) return;
                 el.classList.remove('minven-hidden');
             };
-
             const hide = () => {
                 const el = document.getElementById(LOADER_ID);
                 if (!el) return;
                 el.classList.add('minven-hidden');
             };
-
             window.addEventListener('load', () => setTimeout(hide, 120));
             window.addEventListener('beforeunload', show);
-            document.addEventListener(
-                'click',
-                (e) => {
-                    if (e.defaultPrevented) return;
-                    if (e.button !== 0) return;
-                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-
-                    const a = e.target && e.target.closest ? e.target.closest('a') : null;
-                    if (!a) return;
-                    if (a.hasAttribute('download')) return;
-                    if ((a.getAttribute('target') || '').toLowerCase() === '_blank') return;
-                    if (a.getAttribute('data-no-loader') !== null) return;
-
-                    const href = (a.getAttribute('href') || '').trim();
-                    if (!href || href === '#' || href.startsWith('#')) return;
-                    if (href.toLowerCase().startsWith('javascript:')) return;
-
-                    let url;
-                    try {
-                        url = new URL(href, window.location.href);
-                    } catch {
-                        return;
-                    }
-                    if (url.origin !== window.location.origin) return;
-
-                    show();
-                },
-                true
-            );
-            document.addEventListener(
-                'submit',
-                (e) => {
-                    if (e.defaultPrevented) return;
-                    show();
-                },
-                true
-            );
+            document.addEventListener('click', (e) => {
+                if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                const a = e.target && e.target.closest ? e.target.closest('a') : null;
+                if (!a || a.hasAttribute('download') || (a.getAttribute('target') || '').toLowerCase() === '_blank' || a.getAttribute('data-no-loader') !== null) return;
+                const href = (a.getAttribute('href') || '').trim();
+                if (!href || href === '#' || href.startsWith('#') || href.toLowerCase().startsWith('javascript:')) return;
+                let url;
+                try { url = new URL(href, window.location.href); } catch { return; }
+                if (url.origin !== window.location.origin) return;
+                show();
+            }, true);
+            document.addEventListener('submit', (e) => {
+                if (e.defaultPrevented) return;
+                show();
+            }, true);
         })();
     </script>
 </head>
@@ -441,59 +397,49 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <img class="minven-logo" src="<?= htmlspecialchars(url_for('asset/LOGO1.png')) ?>" alt="">
         </div>
     </div>
+    
     <div class="login-split-container">
         <div class="login-form-section">
-            <h2>Log in</h2>
-            <?php if (isset($error)): ?>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <?= htmlspecialchars($error) ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            <?php endif; ?>
-            
-            <form method="POST">
-                <div class="mb-3"> <!-- Menggunakan mb-3 untuk konsistensi spacing Bootstrap -->
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" id="username" name="username" class="form-control" autocomplete="username" required autofocus>
-                </div>
+            <div class="login-form-inner">
+                <h2>Log in</h2>
+                <?php if (isset($error)): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <?= htmlspecialchars($error) ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
                 
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" name="password" class="form-control" autocomplete="current-password" required>
-                </div>
-    
-                <div class="mb-3">
-                    <label for="role_id" class="form-label">Role</label>
-                    <select id="role_id" name="role_id" class="form-select" required>
-                        <option value="">Pilih Role</option>
-                        <?php foreach ($roles as $id => $nama): ?>
-                            <option value="<?= $id ?>"><?= htmlspecialchars($nama) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                
-                <button type="submit" class="btn btn-primary btn-login w-100">Log in</button>
-                <div class="text-center mt-3">
-                    <a href="forget_password.php" class="text-decoration-none" style="color: #007bff; font-size: 0.9rem;">
-                        Lupa Password?
-                    </a>
-                </div>
-            </form>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" id="username" name="username" class="form-control" autocomplete="username" required autofocus>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" name="password" class="form-control" autocomplete="current-password" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-login w-100">Log in</button>
+                    <div class="text-center mt-3">
+                        <a href="forget_password.php" class="text-decoration-none" style="color: #007bff; font-size: 0.9rem;">
+                            Lupa Password?
+                        </a>
+                    </div>
+                </form>
+            </div>
             
-            <!-- Pindahkan copyright-footer ke sini -->
             <div class="copyright-footer">
                 <span>© 2025 — MINVEN <span class="minven-brand-pro">PRO</span>® | All Rights Reserved.</span>
             </div>
         </div>
+        
         <div class="login-welcome-section">
-            <img src="<?= htmlspecialchars(url_for('asset/LOGO1.png')) ?>" alt="MINVEN Logo" class="logo-img"> <!-- Tambahkan tag img di sini -->
+            <img src="<?= htmlspecialchars(url_for('asset/LOGO1.png')) ?>" alt="MINVEN Logo" class="logo-img">
             <h1>MINVEN <span class="minven-brand-pro">PRO</span></h1>
             <p>Mobile Inventory</p>
-            <!-- Anda bisa menambahkan gambar atau elemen grafis lain di sini jika diinginkan -->
         </div> 
     </div>
-
-    <!-- Hapus copyright-footer dari sini jika masih ada -->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

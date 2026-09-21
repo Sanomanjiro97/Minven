@@ -1,0 +1,19 @@
+{
+    "records": [
+        {
+            "tanggal": "2026-07-09",
+            "total_omset_hari": 1000000,
+            "total_dine_in": 200000,
+            "total_take_away": 200000,
+            "total_online_order": 50000,
+            "total_cash_sales": 200000,
+            "total_qr_gopay": 500000,
+            "total_edc": 600000,
+            "total_online_payment": 600000,
+            "total_transfers": 200000,
+            "total_shopeefood": 300000,
+            "total_gofood_gopay": 300000,
+            "total_ovo": 200000
+        }
+    ]
+}

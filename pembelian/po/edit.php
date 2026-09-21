@@ -93,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $supplier_id = $_POST['supplier_id'];
     $tanggal = $_POST['tanggal'];
     $keterangan = $_POST['keterangan'];
+    $payment_method = $_POST['payment_method'] ?? 'cash';
     $barang_ids = $_POST['barang_id'];
     $jumlah = $_POST['jumlah'];
     $keterangan_detail = $_POST['keterangan_detail'];
@@ -102,10 +103,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     // Update header PO
     $sql = "UPDATE purchase_order 
-            SET supplier_id = ?, tanggal = ?, total_item = ?, keterangan = ? 
+            SET supplier_id = ?, tanggal = ?, total_item = ?, keterangan = ?, payment_method = ? 
             WHERE id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('isisi', $supplier_id, $tanggal, $total_item, $keterangan, $id);
+    $stmt->bind_param('isisis', $supplier_id, $tanggal, $total_item, $keterangan, $payment_method, $id);
     
     if ($stmt->execute()) {
         // Hapus detail PO lama
@@ -289,6 +290,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 </div>
                             </div>
                             <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="payment_method" class="form-label fw-semibold">
+                                        <i class='bx bx-money me-1 text-primary'></i>
+                                        Metode Pembayaran
+                                    </label>
+                                    <select name="payment_method" id="payment_method" class="form-select" required>
+                                        <option value="cash" <?= $po['payment_method'] == 'cash' ? 'selected' : '' ?>>Cash</option>
+                                        <option value="saldo" <?= $po['payment_method'] == 'saldo' ? 'selected' : '' ?>>Saldo</option>
+                                    </select>
+                                </div>
                                 <div class="mb-3">
                                     <label for="keterangan" class="form-label fw-semibold">
                                         <i class='bx bx-note me-1 text-primary'></i>

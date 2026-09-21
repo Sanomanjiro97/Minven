@@ -94,6 +94,10 @@ if ($where) {
 }
 $sql .= " ORDER BY dp.tanggal DESC, dp.no_transaksi DESC";
 
+// Ensure database connection exists before use
+if (!isset($conn) || !$conn instanceof mysqli) {
+    die("Database connection not initialized. Check config.php inclusion.");
+}
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
     die("Error preparing query: " . $conn->error);

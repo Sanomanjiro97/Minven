@@ -506,7 +506,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                        value="<?= date('Y-m-d') ?>" required>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="mb-3">
                                 <label for="keterangan" class="form-label fw-semibold">
                                     <i class='bx bx-note me-1 text-primary'></i>

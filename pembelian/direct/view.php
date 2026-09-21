@@ -26,6 +26,11 @@ $sql = "SELECT dp.*, s.nama_supplier, u.nama as created_by_name
         LEFT JOIN supplier s ON dp.supplier_id = s.id
         LEFT JOIN users u ON dp.created_by = u.id
         WHERE dp.id = ?";
+// Initialize database connection if not already set
+if (!isset($conn) || !$conn instanceof mysqli) {
+    header("Location: ../../index.php");
+    exit();
+}
 $stmt = $conn->prepare($sql);
 $stmt->bind_param('i', $id);
 $stmt->execute();

@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $supplier_id = $_POST['supplier_id'] ?? null;
     $tanggal = $_POST['tanggal'] ?? null;
     $keterangan = $_POST['keterangan'] ?? '';
+    $payment_method = $_POST['payment_method'] ?? 'cash';
     $barang_ids = $_POST['barang_id'] ?? [];
     $jumlah = $_POST['jumlah'] ?? [];
     $harga_satuan = $_POST['harga_satuan'] ?? [];
@@ -177,15 +178,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         // Insert header PO
-        $sql = "INSERT INTO purchase_order (no_po, tanggal, supplier_id, total_item, total_harga, keterangan, status, created_by)
-                VALUES (?, ?, ?, ?, ?, ?, 'draft', ?)";
+        $sql = "INSERT INTO purchase_order (no_po, tanggal, supplier_id, total_item, total_harga, keterangan, status, created_by, payment_method)
+                VALUES (?, ?, ?, ?, ?, ?, 'draft', ?, ?)";
         $stmt = $conn->prepare($sql);
         
         if ($stmt === false) {
             throw new Exception("Database error: " . $conn->error);
         }
         
-        $stmt->bind_param('ssiidss', $no_po, $tanggal, $supplier_id, $total_item, $total_harga_po, $keterangan, $_SESSION['user_id']);
+        $stmt->bind_param('ssiidsss', $no_po, $tanggal, $supplier_id, $total_item, $total_harga_po, $keterangan, $_SESSION['user_id'], $payment_method);
 
         if (!$stmt->execute()) {
              throw new Exception("Gagal membuat Purchase Order: " . $stmt->error);
@@ -419,6 +420,15 @@ $supplier_result = $conn->query($sql_supplier);
                     </div>
                     -->
                     
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="payment_method" class="form-label">Metode Pembayaran</label>
+                            <select class="form-select" id="payment_method" name="payment_method" required>
+                                <option value="cash">Cash</option>
+                                <option value="saldo">Saldo</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label for="keterangan" class="form-label">Keterangan (Opsional)</label>
                         <textarea class="form-control" id="keterangan" name="keterangan" rows="3"></textarea>

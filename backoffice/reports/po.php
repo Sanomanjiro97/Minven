@@ -29,6 +29,29 @@ if ($wantsJson) {
     }
 }
 
+$successMessage = '';
+$errorMessage = '';
+
+// Handle inline payment method update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['po_id']) && isset($_POST['payment_method'])) {
+    $poId = (int)$_POST['po_id'];
+    $paymentMethod = $_POST['payment_method'];
+    if ($paymentMethod === 'cash' || $paymentMethod === 'saldo') {
+        if ($boMainConn) {
+            $stmt = $boMainConn->prepare("UPDATE purchase_order SET payment_method = ? WHERE id = ?");
+            if ($stmt) {
+                $stmt->bind_param('si', $paymentMethod, $poId);
+                if ($stmt->execute()) {
+                    $successMessage = 'Metode pembayaran PO berhasil diperbarui!';
+                } else {
+                    $errorMessage = 'Gagal memperbarui metode pembayaran: ' . $stmt->error;
+                }
+                $stmt->close();
+            }
+        }
+    }
+}
+
 $start = (string)($_GET['start'] ?? '');
 $end = (string)($_GET['end'] ?? '');
 $supplierId = (int)($_GET['supplier_id'] ?? 0);
@@ -54,7 +77,6 @@ $totalPo = 0.0;
 
 if ($boMainConn) {
     $detailStatusExists = function_exists('db_has_column') ? db_has_column($boMainConn, 'detail_purchase_order', 'status') : true;
-    $detailFilter = $detailStatusExists ? "AND (d2.status IS NULL OR d2.status != 'rejected')" : "";
 
     $params = [];
     $types = '';
@@ -63,7 +85,7 @@ if ($boMainConn) {
     $params[] = $start;
     $params[] = $end;
 
-    $where .= " AND po.status != 'menunggu'";
+    $where .= " AND po.status NOT IN ('menunggu', 'draft')";
 
     if ($supplierId > 0) {
         $where .= " AND po.supplier_id = ?";
@@ -82,20 +104,33 @@ if ($boMainConn) {
         $params[] = $like;
     }
 
+    // QUERY UTAMA: Menggunakan subquery dinamis yang menghitung total_harga berdasarkan logika po_detail.php
+    // Memperbaiki masalah nilai kosong/0/NULL dengan formula COALESCE(NULLIF(d2.total_harga, 0), (d2.jumlah * d2.harga_satuan))
     $sql = "SELECT po.id, po.no_po, po.tanggal,
-                   (
-                       SELECT COALESCE(SUM(d2.jumlah), 0)
-                       FROM detail_purchase_order d2
-                       WHERE d2.purchase_order_id = po.id
-                       $detailFilter
-                   ) AS total_item,
-                   (
-                       SELECT COALESCE(SUM(COALESCE(d2.total_harga, (d2.jumlah * d2.harga_satuan))), 0)
-                       FROM detail_purchase_order d2
-                       WHERE d2.purchase_order_id = po.id
-                       $detailFilter
-                   ) AS total_harga,
+                   CASE 
+                       WHEN po.status = 'rejected' THEN 0 
+                       ELSE (
+                           SELECT COALESCE(SUM(
+                               CASE WHEN " . ($detailStatusExists ? "d2.status = 'rejected'" : "1=0") . " THEN 0 
+                               ELSE d2.jumlah END
+                           ), 0)
+                           FROM detail_purchase_order d2
+                           WHERE d2.purchase_order_id = po.id
+                       ) 
+                   END AS total_item,
+                   CASE 
+                       WHEN po.status = 'rejected' THEN 0 
+                       ELSE (
+                           SELECT COALESCE(SUM(
+                               CASE WHEN " . ($detailStatusExists ? "d2.status = 'rejected'" : "1=0") . " THEN 0 
+                               ELSE COALESCE(NULLIF(d2.total_harga, 0), (d2.jumlah * d2.harga_satuan)) END
+                           ), 0)
+                           FROM detail_purchase_order d2
+                           WHERE d2.purchase_order_id = po.id
+                       ) 
+                   END AS total_harga,
                    po.status,
+                   po.payment_method,
                    s.nama_supplier
             FROM purchase_order po
             LEFT JOIN supplier s ON s.id = po.supplier_id
@@ -153,6 +188,12 @@ bo_render_shell_start([
     'header_actions' => $headerActions,
 ]);
 ?>
+<?php if ($successMessage): ?>
+    <div class="alert alert-success mb-4"><?= htmlspecialchars($successMessage) ?></div>
+<?php endif; ?>
+<?php if ($errorMessage): ?>
+    <div class="alert alert-danger mb-4"><?= htmlspecialchars($errorMessage) ?></div>
+<?php endif; ?>
 <div class="bo-card p-4 mb-4">
     <div class="bo-card-header">
         <div>
@@ -207,6 +248,7 @@ bo_render_shell_start([
                     <th>No PO</th>
                     <th>Supplier</th>
                     <th>Status</th>
+                    <th>Metode</th>
                     <th class="text-end">Total Item</th>
                     <th class="text-end">Total PO</th>
                     <th class="text-end">Detail</th>
@@ -214,7 +256,7 @@ bo_render_shell_start([
             </thead>
             <tbody>
                 <?php if (empty($pos)): ?>
-                    <tr><td colspan="7" class="text-center text-muted py-4">Data tidak ada.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-4">Data tidak ada.</td></tr>
                 <?php else: ?>
                     <?php foreach ($pos as $po): ?>
                         <tr>
@@ -222,6 +264,27 @@ bo_render_shell_start([
                             <td><?= htmlspecialchars($po['no_po']) ?></td>
                             <td><?= htmlspecialchars($po['nama_supplier'] ?? '-') ?></td>
                             <td><?= htmlspecialchars($po['status'] ?? '-') ?></td>
+                            <td>
+                                <div class="dropdown d-inline-block">
+                                    <button class="btn btn-sm dropdown-toggle <?= $po['payment_method'] === 'cash' ? 'btn-success' : ($po['payment_method'] === 'saldo' ? 'btn-primary' : 'btn-outline-secondary') ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <?= $po['payment_method'] ? strtoupper($po['payment_method']) : 'Pilih Metode' ?>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <form method="POST">
+                                                <input type="hidden" name="po_id" value="<?= (int)$po['id'] ?>">
+                                                <button type="submit" name="payment_method" value="cash" class="dropdown-item <?= $po['payment_method'] === 'cash' ? 'active' : '' ?>">Cash</button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form method="POST">
+                                                <input type="hidden" name="po_id" value="<?= (int)$po['id'] ?>">
+                                                <button type="submit" name="payment_method" value="saldo" class="dropdown-item <?= $po['payment_method'] === 'saldo' ? 'active' : '' ?>">Saldo</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
                             <td class="text-end"><?= number_format((int)($po['total_item'] ?? 0)) ?></td>
                             <td class="text-end">Rp <?= number_format((float)($po['total_harga'] ?? 0), 0, ',', '.') ?></td>
                             <td class="text-end">

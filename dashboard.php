@@ -293,6 +293,75 @@ if ($gudang_aktif_res instanceof mysqli_result) {
     $gudang_aktif_res->free();
 }
 
+// Calculate omset, pengeluaran, sisa cash/saldo per bulan dan tahun
+$bulan_ini = date('Y-m');
+$tahun_ini = date('Y');
+
+// Get monthly pendapatan
+$query_pendapatan_bulan = $conn->query("SELECT 
+    SUM(total_omset_hari) AS total_omset_bulan,
+    SUM(total_cash_sales) AS total_cash_bulan,
+    SUM(total_qr_gopay + total_edc + total_online_payment + total_transfers + total_shopeefood + total_gofood_gopay + total_ovo) AS total_saldo_bulan
+    FROM pendapatan_manual 
+    WHERE tanggal LIKE '$bulan_ini-%'");
+
+// Get yearly pendapatan
+$query_pendapatan_tahun = $conn->query("SELECT 
+    SUM(total_omset_hari) AS total_omset_tahun,
+    SUM(total_cash_sales) AS total_cash_tahun,
+    SUM(total_qr_gopay + total_edc + total_online_payment + total_transfers + total_shopeefood + total_gofood_gopay + total_ovo) AS total_saldo_tahun
+    FROM pendapatan_manual 
+    WHERE tanggal LIKE '$tahun_ini-%'");
+
+// Get monthly pengeluaran
+$query_pengeluaran_bulan = $conn->query("SELECT 
+    SUM(CASE WHEN payment_method = 'cash' THEN total_harga ELSE 0 END) AS total_pengeluaran_cash_bulan,
+    SUM(CASE WHEN payment_method = 'saldo' THEN total_harga ELSE 0 END) AS total_pengeluaran_saldo_bulan
+    FROM pengeluaran 
+    WHERE tanggal BETWEEN '$bulan_ini-01' AND '$bulan_ini-31'");
+
+// Get yearly pengeluaran
+$query_pengeluaran_tahun = $conn->query("SELECT 
+    SUM(CASE WHEN payment_method = 'cash' THEN total_harga ELSE 0 END) AS total_pengeluaran_cash_tahun,
+    SUM(CASE WHEN payment_method = 'saldo' THEN total_harga ELSE 0 END) AS total_pengeluaran_saldo_tahun
+    FROM pengeluaran 
+    WHERE tanggal LIKE '$tahun_ini-%'");
+
+$omset_bulan = 0; $cash_bulan = 0; $saldo_bulan = 0;
+if ($query_pendapatan_bulan) {
+    $p_bulan = $query_pendapatan_bulan->fetch_assoc();
+    $omset_bulan = (float)($p_bulan['total_omset_bulan'] ?? 0);
+    $cash_bulan = (float)($p_bulan['total_cash_bulan'] ?? 0);
+    $saldo_bulan = (float)($p_bulan['total_saldo_bulan'] ?? 0);
+}
+
+$omset_tahun = 0; $cash_tahun = 0; $saldo_tahun = 0;
+if ($query_pendapatan_tahun) {
+    $p_tahun = $query_pendapatan_tahun->fetch_assoc();
+    $omset_tahun = (float)($p_tahun['total_omset_tahun'] ?? 0);
+    $cash_tahun = (float)($p_tahun['total_cash_tahun'] ?? 0);
+    $saldo_tahun = (float)($p_tahun['total_saldo_tahun'] ?? 0);
+}
+
+$pengeluaran_cash_bulan = 0; $pengeluaran_saldo_bulan = 0;
+if ($query_pengeluaran_bulan) {
+    $pg_bulan = $query_pengeluaran_bulan->fetch_assoc();
+    $pengeluaran_cash_bulan = (float)($pg_bulan['total_pengeluaran_cash_bulan'] ?? 0);
+    $pengeluaran_saldo_bulan = (float)($pg_bulan['total_pengeluaran_saldo_bulan'] ?? 0);
+}
+
+$pengeluaran_cash_tahun = 0; $pengeluaran_saldo_tahun = 0;
+if ($query_pengeluaran_tahun) {
+    $pg_tahun = $query_pengeluaran_tahun->fetch_assoc();
+    $pengeluaran_cash_tahun = (float)($pg_tahun['total_pengeluaran_cash_tahun'] ?? 0);
+    $pengeluaran_saldo_tahun = (float)($pg_tahun['total_pengeluaran_saldo_tahun'] ?? 0);
+}
+
+$sisa_cash_bulan = $cash_bulan - $pengeluaran_cash_bulan;
+$sisa_saldo_bulan = $saldo_bulan - $pengeluaran_saldo_bulan;
+$sisa_cash_tahun = $cash_tahun - $pengeluaran_cash_tahun;
+$sisa_saldo_tahun = $saldo_tahun - $pengeluaran_saldo_tahun;
+
 $dashboard_alert_total = $stok_min_count + $stok_habis_count;
 $dashboard_status_label = $dashboard_alert_total > 0 ? 'Perlu perhatian' : 'Kondisi stok aman';
 $dashboard_status_class = $dashboard_alert_total > 0 ? 'warn' : 'ok';
@@ -1279,6 +1348,105 @@ $dashboard_status_class = $dashboard_alert_total > 0 ? 'warn' : 'ok';
 
                 <div class="content-section">
                     <h2 class="section-title">
+                        <i class='bx bx-line-chart'></i>
+                        Ringkasan Keuangan
+                    </h2>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card__head">
+                                <div class="stat-icon">
+                                    <i class='bx bx-cash-coin'></i>
+                                </div>
+                                <div class="stat-caption">OMSET BULAN INI</div>
+                            </div>
+                            <div class="stat-number">Rp <?= number_format($omset_bulan, 0, ',', '.') ?></div>
+                            <div class="stat-label">Total Pendapatan Bulanan</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card__head">
+                                <div class="stat-icon">
+                                    <i class='bx bx-calendar-star'></i>
+                                </div>
+                                <div class="stat-caption">OMSET TAHUN INI</div>
+                            </div>
+                            <div class="stat-number">Rp <?= number_format($omset_tahun, 0, ',', '.') ?></div>
+                            <div class="stat-label">Total Pendapatan Tahunan</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card__head">
+                                <div class="stat-icon">
+                                    <i class='bx bx-wallet'></i>
+                                </div>
+                                <div class="stat-caption">SISA CASH BULAN</div>
+                            </div>
+                            <div class="stat-number">Rp <?= number_format($sisa_cash_bulan, 0, ',', '.') ?></div>
+                            <div class="stat-label">Cash - Pengeluaran Cash</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card__head">
+                                <div class="stat-icon">
+                                    <i class='bx bx-credit-card-front'></i>
+                                </div>
+                                <div class="stat-caption">SISA SALDO BULAN</div>
+                            </div>
+                            <div class="stat-number">Rp <?= number_format($sisa_saldo_bulan, 0, ',', '.') ?></div>
+                            <div class="stat-label">Saldo - Pengeluaran Saldo</div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid mt-3">
+                        <div class="stat-card">
+                            <div class="stat-card__head">
+                                <div class="stat-icon">
+                                    <i class='bx bx-cash-stack'></i>
+                                </div>
+                                <div class="stat-caption">SISA CASH TAHUNAN</div>
+                            </div>
+                            <div class="stat-number">Rp <?= number_format($sisa_cash_tahun, 0, ',', '.') ?></div>
+                            <div class="stat-label">Cash Tahunan - Pengeluaran Cash Tahunan</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card__head">
+                                <div class="stat-icon">
+                                    <i class='bx bx-bank'></i>
+                                </div>
+                                <div class="stat-caption">SISA SALDO TAHUNAN</div>
+                            </div>
+                            <div class="stat-number">Rp <?= number_format($sisa_saldo_tahun, 0, ',', '.') ?></div>
+                            <div class="stat-label">Saldo Tahunan - Pengeluaran Saldo Tahunan</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card__head">
+                                <div class="stat-icon">
+                                    <i class='bx bx-bag-x'></i>
+                                </div>
+                                <div class="stat-caption">PENGELUARAN CASH</div>
+                            </div>
+                            <div class="stat-number">Rp <?= number_format($pengeluaran_cash_bulan, 0, ',', '.') ?></div>
+                            <div class="stat-label">Bulan Ini</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card__head">
+                                <div class="stat-icon">
+                                    <i class='bx bx-credit-card'></i>
+                                </div>
+                                <div class="stat-caption">PENGELUARAN SALDO</div>
+                            </div>
+                            <div class="stat-number">Rp <?= number_format($pengeluaran_saldo_bulan, 0, ',', '.') ?></div>
+                            <div class="stat-label">Bulan Ini</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-section">
+                    <h2 class="section-title">
                         <i class='bx bx-navigation'></i>
                         Akses Cepat
                     </h2>
@@ -1337,6 +1505,15 @@ $dashboard_status_class = $dashboard_alert_total > 0 ? 'warn' : 'ok';
                             <div class="action-title">Transfer Stok</div>
                             <div class="action-desc">Pindahkan antar gudang</div>
                         </a>
+
+                        <a href="<?= htmlspecialchars(url_for('backoffice/reports/pengeluaran.php')) ?>" class="action-card">
+            <span class="action-tag">Pengeluaran</span>
+            <div class="action-icon">
+                <i class='bx bx-cash'></i>
+            </div>
+            <div class="action-title">Input Pengeluaran</div>
+            <div class="action-desc">Catat pengeluaran cash/saldo di Backoffice</div>
+        </a>
                     </div>
                 </div>
 

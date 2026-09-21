@@ -29,6 +29,29 @@ if ($wantsJson) {
     }
 }
 
+$successMessage = '';
+$errorMessage = '';
+
+// Handle inline payment method update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['direct_id']) && isset($_POST['payment_method'])) {
+    $directId = (int)$_POST['direct_id'];
+    $paymentMethod = $_POST['payment_method'];
+    if ($paymentMethod === 'cash' || $paymentMethod === 'saldo') {
+        if ($boMainConn) {
+            $stmt = $boMainConn->prepare("UPDATE direct_purchase SET payment_method = ? WHERE id = ?");
+            if ($stmt) {
+                $stmt->bind_param('si', $paymentMethod, $directId);
+                if ($stmt->execute()) {
+                    $successMessage = 'Metode pembayaran Direct berhasil diperbarui!';
+                } else {
+                    $errorMessage = 'Gagal memperbarui metode pembayaran: ' . $stmt->error;
+                }
+                $stmt->close();
+            }
+        }
+    }
+}
+
 $start = (string)($_GET['start'] ?? '');
 $end = (string)($_GET['end'] ?? '');
 $supplierId = (int)($_GET['supplier_id'] ?? 0);
@@ -55,7 +78,7 @@ $totalDirect = 0.0;
 if ($boMainConn) {
     $params = [];
     $types = '';
-    $where = "dp.tanggal BETWEEN ? AND ?";
+    $where = "dp.tanggal BETWEEN ? AND ? AND dp.status != 'menunggu'";
     $types .= 'ss';
     $params[] = $start;
     $params[] = $end;
@@ -79,7 +102,7 @@ if ($boMainConn) {
     }
 
     $sql = "SELECT dp.id, dp.no_transaksi, dp.tanggal, dp.total_item, dp.total_harga, dp.status, dp.nama_toko,
-                   s.nama_supplier
+                   s.nama_supplier, dp.payment_method
             FROM direct_purchase dp
             LEFT JOIN supplier s ON s.id = dp.supplier_id
             $joinDetail
@@ -136,6 +159,12 @@ bo_render_shell_start([
     'header_actions' => $headerActions,
 ]);
 ?>
+<?php if ($successMessage): ?>
+    <div class="alert alert-success mb-4"><?= htmlspecialchars($successMessage) ?></div>
+<?php endif; ?>
+<?php if ($errorMessage): ?>
+    <div class="alert alert-danger mb-4"><?= htmlspecialchars($errorMessage) ?></div>
+<?php endif; ?>
 <div class="bo-card p-4 mb-4">
     <div class="bo-card-header">
         <div>
@@ -190,15 +219,16 @@ bo_render_shell_start([
                     <th>No Transaksi</th>
                     <th>Supplier</th>
                     <th>Nama Toko</th>
+                    <th>Status</th>
+                    <th>Metode</th>
                     <th class="text-end">Total Item</th>
                     <th class="text-end">Total Harga</th>
-                    <th>Status</th>
                     <th class="text-end">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($directs)): ?>
-                    <tr><td colspan="8" class="text-center text-muted py-4">Data tidak ada.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted py-4">Data tidak ada.</td></tr>
                 <?php else: ?>
                     <?php foreach ($directs as $d): ?>
                         <tr>
@@ -206,9 +236,30 @@ bo_render_shell_start([
                             <td><?= htmlspecialchars((string)($d['no_transaksi'] ?? '')) ?></td>
                             <td><?= htmlspecialchars((string)($d['nama_supplier'] ?? '-')) ?></td>
                             <td><?= htmlspecialchars((string)($d['nama_toko'] ?? '-')) ?></td>
+                            <td><?= htmlspecialchars((string)($d['status'] ?? '-')) ?></td>
+                            <td>
+                                <div class="dropdown d-inline-block">
+                                    <button class="btn btn-sm dropdown-toggle <?= $d['payment_method'] === 'cash' ? 'btn-success' : ($d['payment_method'] === 'saldo' ? 'btn-primary' : 'btn-outline-secondary') ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <?= $d['payment_method'] ? strtoupper($d['payment_method']) : 'Pilih Metode' ?>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <form method="POST">
+                                                <input type="hidden" name="direct_id" value="<?= (int)$d['id'] ?>">
+                                                <button type="submit" name="payment_method" value="cash" class="dropdown-item <?= $d['payment_method'] === 'cash' ? 'active' : '' ?>">Cash</button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form method="POST">
+                                                <input type="hidden" name="direct_id" value="<?= (int)$d['id'] ?>">
+                                                <button type="submit" name="payment_method" value="saldo" class="dropdown-item <?= $d['payment_method'] === 'saldo' ? 'active' : '' ?>">Saldo</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
                             <td class="text-end"><?= number_format((int)($d['total_item'] ?? 0)) ?></td>
                             <td class="text-end">Rp <?= number_format((float)($d['total_harga'] ?? 0), 0, ',', '.') ?></td>
-                            <td><?= htmlspecialchars((string)($d['status'] ?? '-')) ?></td>
                             <td class="text-end">
                                 <a class="btn btn-sm btn-outline-primary" href="<?= htmlspecialchars(bo_url_for('reports/direct_detail.php?id=' . (int)($d['id'] ?? 0))) ?>">Lihat</a>
                             </td>

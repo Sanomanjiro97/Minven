@@ -25,6 +25,10 @@ if ($id <= 0) {
 
 // Query untuk mengambil data header pembelian
 $sql = "SELECT * FROM direct_purchase WHERE id = ? AND status = 'menunggu'"; 
+// Check and initialize database connection if undefined
+if (!isset($conn)) {
+    throw new Exception('Database connection not established');
+}
 $stmt = $conn->prepare($sql);
 $stmt->bind_param('i', $id);
 $stmt->execute();

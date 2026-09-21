@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 31, 2026 at 08:29 PM
+-- Generation Time: Jul 01, 2026 at 05:14 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -74,141 +74,142 @@ CREATE TABLE `barang` (
 --
 
 INSERT INTO `barang` (`id`, `kode_barang`, `nama_barang`, `barcode`, `barcode_dus`, `satuan`, `kategori_id`, `satuan_id`, `supplier_id`, `stok_minimum`, `harga_beli`, `harga_po`, `harga_jual`, `gambar`, `created_by`, `created_at`, `expired_at`, `baku_non_baku`) VALUES
-(532, 'B-MCC', 'Bubuk Cotton Candy Arteristo', '', '', NULL, 122, 87, 12484, 120, 0.00, 63000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(533, 'B-MCKLT', 'Bubuk Chocolate Arteristo', '', '', NULL, 122, 87, 12484, 120, 186.00, 100000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(535, 'B-MMTC', 'Bubuk Matcha Tofico', '', '', NULL, 122, 87, 12484, 120, 234.00, 234000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(536, 'B-MSTW', 'Bubuk Strawberry Tofico', '', '', NULL, 122, 87, 12484, 120, 150.00, 150000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(537, 'B-MTRO', 'Bubuk Taro Ateristo', '', '', NULL, 122, 87, 12484, 140, 126.00, 63000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(538, 'B-TLM', 'Bubuk Lemon Tea', '', '', NULL, 122, 87, 12484, 200, 0.00, 106000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(539, 'BB-ASYP', 'Ayam Sayap', '', '', NULL, 121, 91, 12473, 16, 1782.00, 41000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(540, 'BB-BSCF', 'Biscoff Biiscuit', NULL, NULL, NULL, 121, 91, 12484, 8, 1459.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
-(542, 'BB-GLA', 'Gula Pasir', NULL, NULL, NULL, 121, 87, 12486, 100, 19.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
-(543, 'BB-KCP', 'Kecap', NULL, NULL, NULL, 121, 89, 12486, 100, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
-(544, 'BB-MGR', 'Indomie Goreng', NULL, NULL, NULL, 121, 91, 12486, 10, 3200.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
-(545, 'BB-MRB', 'Indomie Rebus', NULL, NULL, NULL, 121, 91, 12486, 10, 3100.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
-(546, 'BB-MX', 'Bubuk Max Creamer', '', '', NULL, 121, 87, 12484, 500, 84.00, 49000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(548, 'BB-SKM', 'Susu Kental Manis', '', '', NULL, 121, 87, 12486, 1480, 34.00, 8600.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(549, 'BB-SOR', 'Saori (1L)', NULL, NULL, NULL, 121, 89, 12486, 200, 13.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
-(551, 'BB-TKT', 'Tepung Kentucky', '', '', NULL, 121, 87, 12486, 500, 0.00, 21000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(552, 'BB-TLR', 'Telur', NULL, NULL, NULL, 121, 91, 12482, 10, 1900.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(553, 'BB-TTLE', 'Totole', '', '', NULL, 121, 87, 12486, 50, 135.00, 54000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(554, 'BB-UHT', 'Susu Diamond UHT', '', '', NULL, 121, 89, 12486, 3000, 22.00, 22000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(555, 'BB-VIT', 'VIT 330 Ml', '', '', NULL, 121, 91, 12476, 8, 1666.00, 40000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(556, 'BB-YKLT', 'Yakult', '', '', NULL, 121, 91, 12486, 5, 2100.00, 10500.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(557, 'C-ARBC', 'Arabica Beans Classic', '', '', NULL, 123, 87, 12485, 250, 245.00, 245000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(558, 'C-ARBK', 'Arabica Beans Kopsu', '', '', NULL, 123, 87, 12474, 500, 235.00, 235000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(559, 'EUR-3W', 'Eurution 3 warna (bar)', NULL, NULL, NULL, 126, 91, 12483, 1, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(560, 'EUR-7w', 'Eurution 7w Kuning', NULL, NULL, NULL, 126, 91, 12483, 1, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(561, 'FF-MRM', 'Mister Max Sosis', '', '', NULL, 124, 91, 12486, 5, 1166.00, 28000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(562, 'FF-CHR', 'Churros', '', '', NULL, 124, 92, 12486, 2, 0.00, 25000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(563, 'FF-CHSK', 'Chicken Skin (Fiesta Crispy Crunch)', '', '', NULL, 124, 90, 12486, 2, 0.00, 25500.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(564, 'FF-CPLT', 'Cireng Platter', '', '', NULL, 124, 92, 12486, 2, 3125.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
-(565, 'FF-CRGLD', 'Cireng Lada Garam', '', '', NULL, 124, 92, 12486, 3, 6250.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
-(566, 'FF-CRGP', 'Cireng Porsian', '', '', NULL, 124, 92, 12486, 4, 4687.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
-(567, 'FF-DAD', 'Ayam Dada', NULL, NULL, NULL, 124, 91, 12483, 2, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(568, 'FF-FJWL', 'French Fries Jawil', '', '', NULL, 124, 92, 12486, 3, 0.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(569, 'FF-FPLT', 'French Fries Platter', '', '', NULL, 124, 92, 12486, 2, 3153.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(570, 'FF-FPOR', 'French Fries Porsian', '', '', NULL, 124, 92, 12486, 4, 6307.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(571, 'FF-KANZ', 'Sosis Kanzler', '', '', NULL, 124, 91, 12486, 8, 1357.00, 28500.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(572, 'FF-KARG', 'Karage Porsian', '', '', NULL, 124, 92, 12486, 3, 0.00, 38000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(573, 'FF-KTSU', 'Katsu Porsian', '', '', NULL, 124, 92, 12486, 5, 10250.00, 41000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(574, 'FF-SUW', 'Ayam Suwir', '', '', NULL, 124, 92, 12483, 1, 0.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(575, 'FF-WDGS', 'Wedges Porsian', '', '', NULL, 124, 92, 12486, 3, 0.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(576, 'GR-APL', 'Apel', NULL, NULL, NULL, 125, 91, 12484, 5, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(577, 'GR-GMB', 'Gummy Bear', NULL, NULL, NULL, 125, 91, 12486, 9, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(578, 'GR-LMGC', 'Lemon Garmish GC', NULL, NULL, NULL, 125, 90, 12484, 2, 23000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(579, 'GR-LMO', 'Lemon Garmish', NULL, NULL, NULL, 125, 91, 12484, 12, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(580, 'GR-PINE', 'Nanas', NULL, NULL, NULL, 125, 91, 12480, 7, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(581, 'GR-POP', 'Poppin', NULL, NULL, NULL, 125, 91, 12484, 7, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(582, 'GR-POPGC', 'Poppin', NULL, NULL, NULL, 125, 90, 12484, 1, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(583, 'GR-PPS', 'Pocky Stick', NULL, NULL, NULL, 125, 91, 12486, 8, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(584, 'KRIS-5w', 'Krisbow 5w Warm White', NULL, NULL, NULL, 126, 91, 12483, 1, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(585, 'KRIS-7w', 'Krisbow 7w Coolday white', NULL, NULL, NULL, 126, 91, 12483, 1, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(586, 'LMP-K8w', 'Philips 8w kuning', NULL, NULL, NULL, 131, 91, 12483, 1, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(588, 'PK-10', 'Plastik Ukr 10', '', '', NULL, 127, 90, 12481, 1, 0.00, 5299.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(589, 'PK-24', 'Plastik Ukr 24', '', '', NULL, 127, 90, 12481, 1, 0.00, 14986.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(590, 'PK-26', 'Plastik Ukr 26', '', '', NULL, 127, 90, 12481, 1, 0.00, 29286.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(591, 'PK-BTL1', 'Botol Kale 1 Liter', '', '', NULL, 127, 91, 12481, 3, 2649.00, 2649.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(592, 'PK-CAN', 'Kaleng (PET)', NULL, NULL, NULL, 127, 91, 12475, 25, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(593, 'PK-PC', 'Plastic Cup', NULL, NULL, NULL, 127, 91, 12470, 250, 950.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(594, 'PK-PL', 'Plastic Tutup', NULL, NULL, NULL, 127, 91, 12470, 250, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(595, 'PK-SDT', 'Sedotan Merah', NULL, NULL, NULL, 131, 91, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(596, 'PK-TT2', 'Take Away Tray 2 cup', NULL, NULL, NULL, 127, 91, 12481, 25, 1623.98, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(597, 'PK-TT4', 'Take Away Tray 4 cup', NULL, NULL, NULL, 127, 91, 12481, 25, 2249.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(598, 'SAN-LIVI', 'Tissue Livi', '', '', NULL, 128, 91, 12483, 5, 3432.00, 205893.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(599, 'SAY-BWD', 'Bawang Daun', '', '', NULL, 130, 87, 12482, 0, 0.00, 3000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
-(600, 'SAY-BWM', 'Bawang Merah', '', '', NULL, 130, 87, 12482, 100, 0.00, 20000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(601, 'SAY-BWP', 'Bawang Putih', '', '', NULL, 130, 87, 12482, 100, 0.00, 18000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(602, 'SAY-TIM', 'Timun', '', '', NULL, 130, 87, 12482, 150, 0.00, 7000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(603, 'SAY-TOM', 'Tomat', '', '', NULL, 130, 87, 12482, 100, 0.00, 8000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(604, 'SER-KAT', 'Kertas Anti Tumpah', NULL, NULL, NULL, 131, 91, 12483, 50, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(605, 'SER-ZIP', 'Zip Tie Satuan', NULL, NULL, NULL, 131, 91, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(606, 'SO-BBQ', 'Delmonte Saos BBQ', '', '', NULL, 129, 87, 12486, 200, 335.00, 33500.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(607, 'SO-CUR', 'Saos Curry', '', '', NULL, 129, 91, 12489, 8, 4900.00, 49000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(608, 'SO-JWL', 'Saos Jawil', NULL, NULL, NULL, 129, 90, 12483, 3, 8775.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(609, 'SO-SKJ', 'Saos Keju', '', '', NULL, 129, 87, 12486, 100, 0.00, 22000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(610, 'SO-SSS', 'Saos Sambal Saset ABC', NULL, NULL, NULL, 129, 91, 12486, 5, 7500.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(611, 'SO-TMS', 'Saos Tomat Saset ABC', '', '', NULL, 129, 91, 12486, 5, 0.00, 6500.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(612, 'SO-VOL', 'Mama Suka Saos Volcano', '', '', NULL, 129, 87, 12486, 200, 0.00, 35000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(613, 'SS-HG', 'Sarung Tangan', NULL, NULL, NULL, 131, 91, 12483, 12, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(614, 'SY-APPL', 'Syrup Apple Delifru', '', '', NULL, 133, 87, 12484, 0, 0.00, 110999.98, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(615, 'SY-BLGN', 'Syrup Blue Lagoon Delifru', '', '', NULL, 133, 89, 12484, 70, 0.00, 111000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(616, 'SY-BUTS', 'Syrup Butterscotch Trieste', '', '', NULL, 133, 89, 12484, 70, 77.00, 77000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(617, 'SY-CRML', 'Syrup Caramel Trieste', '', '', NULL, 133, 89, 12484, 70, 77.00, 77000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(618, 'SY-HAZE', 'Syrup Hazelnut Trieste', '', '', NULL, 133, 89, 12484, 70, 77.00, 77000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(619, 'SY-LMEX', 'Syrup Lemon Extract', NULL, NULL, NULL, 133, 89, 12484, 50, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(620, 'SY-LYCHE', 'Syrup Lychee Delifru', '', '', NULL, 133, 89, 12484, 70, 0.00, 110999.97, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(621, 'SY-RSTD', 'Syrup Roasted Almond Davinci', '', '', NULL, 133, 89, 12484, 90, 77.00, 77000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(622, 'TB-TEA', 'Tea Bag', NULL, NULL, NULL, 134, 91, 12486, 10, 260.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(623, 'UT-KRB', 'Kertas Roll Bon', NULL, NULL, NULL, 131, 91, 12483, 2, 7000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(630, 'SY-BEINDLCE', 'Syrup BEIN DOLCE', '', '', NULL, 133, 91, 12471, 0, 0.00, 72500.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(631, 'SY-BEINPCH', 'Syrup BEIN Peach', '', '', NULL, 133, 91, 12471, 0, 72500.00, 72500.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(632, 'BU-BKBB', 'Bumbu Kentang BBQ Indofood', '', '', NULL, 121, 87, 12486, 25, 200.00, 5000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'baku'),
-(633, 'BU-BKJB', 'Bumbu Kentang Jagung Bakar Indofood', '', '', NULL, 121, 87, 12486, 25, 200.00, 5000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(635, 'SER-BONC10', 'Bon Cabe lvl 10', '', '', NULL, 125, 91, 12486, 0, 0.00, 10000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(637, 'BB-BRS', 'Resto Beras SLYP Super 5kg', '', '', NULL, 121, 87, 12486, 1000, 16.00, 78000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(644, 'SAY-CBE', 'Cabe Merah', '', '', NULL, 130, 87, 12482, 0, 0.00, 35000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(647, 'ZZ-Cireng Rujak pak', 'Cireng Rujak isi 16', '', '', NULL, 124, 90, 12486, 0, 0.00, 12500.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(648, 'ZZ-CKR', 'Cikur', NULL, NULL, NULL, 121, 91, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(652, 'ZZ-DJ', 'Daun Jeruk 36gr', NULL, NULL, NULL, 121, 87, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(653, 'ZZ-DNPIS', 'Daun Pisang', NULL, NULL, NULL, 125, 91, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(654, 'BB-FILMA', 'Mentega Filma (200 gr)', '', '', NULL, 121, 91, 12486, 0, 38.00, 7500.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(655, 'ZZ-GCLE', 'Galon Cleo', NULL, NULL, NULL, 121, 91, 12476, 0, 23000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(656, 'ZZ-GLIS', 'Galon Isi Ulang', NULL, NULL, NULL, 121, 91, 12476, 0, 6000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(657, 'ZZ-HASOAP', 'Yuri Hand Wash 375 ML', NULL, NULL, NULL, 128, 91, 12486, 0, 19000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(658, 'ZZ-HASOP-YOA', 'Yoa Hand Wash 4L', NULL, NULL, NULL, 128, 91, 12473, 0, 95000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(660, 'ZZ-HEK', 'Isi Ulang Hektar', NULL, NULL, NULL, 132, 90, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(663, 'ZZ-KAVSS', 'Kentang Aviko Shoestring 2.5 Kg', NULL, NULL, NULL, 124, 90, 12486, 0, 82000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(664, 'ZZ-KMCSS', 'Kentang Mcain Shoestring 1kg', NULL, NULL, NULL, 124, 88, 12486, 0, 28000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(665, 'ZZ-KRO', 'Kerupuk Oren', NULL, NULL, NULL, 121, 87, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(666, 'ZZ-KRP', 'Kerupuk Putih', NULL, NULL, NULL, 121, 87, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(668, 'ZZ-LMO', 'Lemon', NULL, NULL, NULL, 121, 91, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(676, 'BB-MNYKG', 'Sunco 2L Pouch', '', '', NULL, 121, 89, 12486, 0, 0.00, 45000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(677, 'BB-MNYKS1', 'Sunco 1L Pouch', '', '', NULL, 121, 89, 12486, 0, 22500.00, 224999.99, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(678, 'ZZ-MNYKSUN', 'Minyak Sunco 5 Liter', '', '', NULL, 121, 89, 12472, 0, 0.00, 118000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(683, 'ZZ-OAT', 'Oatside Milk 1L', NULL, NULL, NULL, 121, 91, 12484, 0, 42000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(684, 'SER-PARS', 'Jays Parsley', '', '', NULL, 125, 91, 12486, 0, 0.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(685, 'ZZ-PEN', 'Pulpen', NULL, NULL, NULL, 132, 91, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(686, 'ZZ-PINE', 'Garnish Nanas Kering 100gr', NULL, NULL, NULL, 125, 90, 12480, 0, 56000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(687, 'ZZ-PPS', 'Pocky', NULL, NULL, NULL, 125, 90, 12486, 0, 8000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(688, 'ZZ-RBL', 'Buah Lychee Red Boat', NULL, NULL, NULL, 121, 90, 12484, 0, 27500.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(690, 'ZZ-SAL', 'Salada', NULL, NULL, NULL, 121, 91, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(691, 'ZZ-SDO', 'Soda', NULL, NULL, NULL, 121, 91, 12484, 5, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(692, 'ZZ-SDT', 'Sedotan', NULL, NULL, NULL, 131, 90, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(697, 'SO-SMAYO', 'Mayo Gourment 1KG', '', '', NULL, 129, 90, 12486, 0, 0.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(698, 'SO-SOSTRF', 'Delmonte Saos Tomat Refill', '', '', NULL, 129, 87, 12486, 300, 17.00, 17000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(699, 'ZZ-SPDLH', 'Spidol Hitam', NULL, NULL, NULL, 132, 91, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(700, 'PK-SPDLM', 'Spidol Merah', '', '', NULL, 132, 91, 12483, 0, 0.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(701, 'ZZ-SPEL', 'Super pell', NULL, NULL, NULL, 128, 91, 12486, 0, 16000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(702, 'ZZ-SPG', 'Sponge', NULL, NULL, NULL, 128, 91, 12486, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(703, 'SO-SSM', 'Saos Sambel Delmonte 1KG', '', '', NULL, 129, 87, 12486, 300, 21000.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(705, 'ZZ-SUN', 'Sunlight Pouch 610 ML', NULL, NULL, NULL, 128, 91, 12486, 0, 9899.97, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(708, 'ZZ-TLG', 'Tulang Seblak', NULL, NULL, NULL, 121, 91, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(711, 'ZZ-TRASH', 'Trash Bag (L)', NULL, NULL, NULL, 128, 90, 12486, 0, 22000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(715, 'ZZ-WDGS', 'Spicy Wedges 1KG', NULL, NULL, NULL, 124, 88, 12486, 0, 65000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(716, 'ZZ-WDT-L', 'Wadah Takeaway (Large)', NULL, NULL, NULL, 131, 91, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(717, 'ZZ-WDT-S', 'Wadah Takeaway (small)', NULL, NULL, NULL, 131, 90, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
-(720, 'ZZ-ZPTIE', 'Zip Tie', NULL, NULL, NULL, 131, 90, 12483, 0, 5500.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku');
+(532, 'B-MMC', 'Bubuk Cotton Candy Arteristo', '', '', 'PCS', 122, 87, 12484, 120, 0.00, 63000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(533, 'B-MCKLT', 'Bubuk Chocolate Arteristo', '', '', 'PCS', 122, 87, 12484, 120, 186.00, 100000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(535, 'B-MMTC', 'Bubuk Matcha Tofico', '', '', 'PCS', 122, 87, 12484, 120, 234.00, 234000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(536, 'B-MSTW', 'Bubuk Strawberry Tofico', '', '', 'PCS', 122, 87, 12484, 120, 150.00, 150000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(537, 'B-MTRO', 'Bubuk Taro Ateristo', '', '', 'PCS', 122, 87, 12484, 140, 126.00, 63000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(538, 'B-TLM', 'Bubuk Lemon Tea', '', '', 'PCS', 122, 87, 12484, 200, 0.00, 106000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(539, 'BB-ASYP', 'Ayam Sayap', '', '', 'PCS', 121, 91, 12473, 16, 1782.00, 41000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(540, 'BB-BSCF', 'Biscoff Biiscuit', NULL, NULL, 'PCS', 121, 91, 12484, 8, 1459.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
+(542, 'BB-GLA', 'Gula Pasir', NULL, NULL, 'PCS', 121, 87, 12486, 100, 19.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
+(543, 'BB-KCP', 'Kecap', NULL, NULL, 'PCS', 121, 89, 12486, 100, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
+(544, 'BB-MGR', 'Indomie Goreng', NULL, NULL, 'PCS', 121, 91, 12486, 10, 3200.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
+(545, 'BB-MRB', 'Indomie Rebus', NULL, NULL, 'PCS', 121, 91, 12486, 10, 3100.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
+(546, 'BB-MX', 'Bubuk Max Creamer', '', '', 'PCS', 121, 87, 12484, 500, 84.00, 49000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(548, 'BB-SKM', 'Susu Kental Manis', '', '', 'PCS', 121, 87, 12486, 1480, 34.00, 8600.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(549, 'BB-SOR', 'Saori (1L)', NULL, NULL, 'PCS', 121, 89, 12486, 200, 13.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
+(551, 'BB-TKT', 'Tepung Kentucky', '', '', 'PCS', 121, 87, 12486, 500, 0.00, 21000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(552, 'BB-TLR', 'Telur', NULL, NULL, 'PCS', 121, 91, 12482, 10, 1900.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(553, 'BB-TTLE', 'Totole', '', '', 'PCS', 121, 87, 12486, 50, 135.00, 54000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(554, 'BB-UHT', 'Susu Diamond UHT', '', '', 'PCS', 121, 89, 12486, 3000, 22.00, 22000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(555, 'BB-VIT', 'VIT 330 Ml', '', '', 'PCS', 121, 91, 12476, 8, 1666.00, 40000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(556, 'BB-YKLT', 'Yakult', '', '', 'PCS', 121, 91, 12486, 5, 2100.00, 10500.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(557, 'C-ARBC', 'Arabica Beans Classic', '', '', 'PCS', 123, 87, 12485, 250, 245.00, 245000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(558, 'C-ARBK', 'Arabica Beans Kopsu', '', '', 'PCS', 123, 87, 12474, 500, 235.00, 235000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(559, 'EUR-3W', 'Eurution 3 warna (bar)', NULL, NULL, 'PCS', 126, 91, 12483, 1, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(560, 'EUR-7w', 'Eurution 7w Kuning', NULL, NULL, 'PCS', 126, 91, 12483, 1, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(561, 'FF-MRM', 'Mister Max Sosis', '', '', 'PCS', 124, 91, 12486, 5, 1166.00, 28000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(562, 'FF-CHR', 'Churros', '', '', 'PCS', 124, 92, 12486, 2, 0.00, 25000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(563, 'FF-CHSK', 'Chicken Skin (Fiesta Crispy Crunch)', '', '', 'PCS', 124, 90, 12486, 2, 0.00, 25500.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(564, 'FF-CPLT', 'Cireng Platter', '', '', 'PCS', 124, 92, 12486, 2, 3125.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
+(565, 'FF-CRGLD', 'Cireng Lada Garam', '', '', 'PCS', 124, 92, 12486, 3, 6250.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
+(566, 'FF-CRGP', 'Cireng Porsian', '', '', 'PCS', 124, 92, 12486, 4, 4687.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'baku'),
+(567, 'FF-DAD', 'Ayam Dada', NULL, NULL, 'PCS', 124, 91, 12483, 2, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(568, 'FF-FJWL', 'French Fries Jawil', '', '', 'PCS', 124, 92, 12486, 3, 0.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(569, 'FF-FPLT', 'French Fries Platter', '', '', 'PCS', 124, 92, 12486, 2, 3153.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(570, 'FF-FPOR', 'French Fries Porsian', '', '', 'PCS', 124, 92, 12486, 4, 6307.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(571, 'FF-KANZ', 'Sosis Kanzler', '', '', 'PCS', 124, 91, 12486, 8, 1357.00, 28500.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(572, 'FF-KARG', 'Karage Porsian', '', '', 'PCS', 124, 92, 12486, 3, 0.00, 38000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(573, 'FF-KTSU', 'Katsu Porsian', '', '', 'PCS', 124, 92, 12486, 5, 10250.00, 41000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(574, 'FF-SUW', 'Ayam Suwir', '', '', 'PCS', 124, 92, 12483, 1, 0.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(575, 'FF-WDGS', 'Wedges Porsian', '', '', 'PCS', 124, 92, 12486, 3, 0.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(576, 'GR-APL', 'Apel', NULL, NULL, 'PCS', 125, 91, 12484, 5, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(577, 'GR-GMB', 'Gummy Bear', NULL, NULL, 'PCS', 125, 91, 12486, 9, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(578, 'GR-LMGC', 'Lemon Garmish GC', NULL, NULL, 'PCS', 125, 90, 12484, 2, 23000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(579, 'GR-LMO', 'Lemon Garmish', NULL, NULL, 'PCS', 125, 91, 12484, 12, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(580, 'GR-PINE', 'Nanas', NULL, NULL, 'PCS', 125, 91, 12480, 7, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(581, 'GR-POP', 'Poppin', NULL, NULL, 'PCS', 125, 91, 12484, 7, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(582, 'GR-POPGC', 'Poppin', NULL, NULL, 'PCS', 125, 90, 12484, 1, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(583, 'GR-PPS', 'Pocky Stick', NULL, NULL, 'PCS', 125, 91, 12486, 8, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(584, 'KRIS-5w', 'Krisbow 5w Warm White', NULL, NULL, 'PCS', 126, 91, 12483, 1, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(585, 'KRIS-7w', 'Krisbow 7w Coolday white', NULL, NULL, 'PCS', 126, 91, 12483, 1, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(586, 'LMP-K8w', 'Philips 8w kuning', NULL, NULL, 'PCS', 131, 91, 12483, 1, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(588, 'PK-10', 'Plastik Ukr 10', '', '', 'PCS', 127, 90, 12481, 1, 0.00, 5299.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(589, 'PK-24', 'Plastik Ukr 24', '', '', 'PCS', 127, 90, 12481, 1, 0.00, 14986.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(590, 'PK-26', 'Plastik Ukr 26', '', '', 'PCS', 127, 90, 12481, 1, 0.00, 29286.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(591, 'PK-BTL1', 'Botol Kale 1 Liter', '', '', 'PCS', 127, 91, 12481, 3, 2649.00, 2649.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(592, 'PK-CAN', 'Kaleng (PET)', NULL, NULL, 'PCS', 127, 91, 12475, 25, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(593, 'PK-PC', 'Plastic Cup', NULL, NULL, 'PCS', 127, 91, 12470, 250, 950.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(594, 'PK-PL', 'Plastic Tutup', NULL, NULL, 'PCS', 127, 91, 12470, 250, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(595, 'PK-SDT', 'Sedotan Merah', NULL, NULL, 'PCS', 131, 91, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(596, 'PK-TT2', 'Take Away Tray 2 cup', NULL, NULL, 'PCS', 127, 91, 12481, 25, 1623.98, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(597, 'PK-TT4', 'Take Away Tray 4 cup', NULL, NULL, 'PCS', 127, 91, 12481, 25, 2249.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(598, 'SAN-LIVI', 'Tissue Livi', '', '', 'PCS', 128, 91, 12483, 5, 3432.00, 205893.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(599, 'SAY-BWD', 'Bawang Daun', '', '', 'PCS', 130, 87, 12482, 0, 0.00, 3000.00, 0.00, NULL, 7, '2026-05-31 10:45:53', NULL, 'non_baku'),
+(600, 'SAY-BWM', 'Bawang Merah', '', '', 'PCS', 130, 87, 12482, 100, 0.00, 20000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(601, 'SAY-BWP', 'Bawang Putih', '', '', 'PCS', 130, 87, 12482, 100, 0.00, 18000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(602, 'SAY-TIM', 'Timun', '', '', 'PCS', 130, 87, 12482, 150, 0.00, 7000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(603, 'SAY-TOM', 'Tomat', '', '', 'PCS', 130, 87, 12482, 100, 0.00, 8000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(604, 'SER-KAT', 'Kertas Anti Tumpah', NULL, NULL, 'PCS', 131, 91, 12483, 50, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(605, 'SER-ZIP', 'Zip Tie Satuan', NULL, NULL, 'PCS', 131, 91, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(606, 'SO-BBQ', 'Delmonte Saos BBQ', '', '', 'PCS', 129, 87, 12486, 200, 335.00, 33500.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(607, 'SO-CUR', 'Saos Curry', '', '', 'PCS', 129, 91, 12489, 8, 4900.00, 49000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(608, 'SO-JWL', 'Saos Jawil', NULL, NULL, 'PCS', 129, 90, 12483, 3, 8775.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(609, 'SO-SKJ', 'Saos Keju', '', '', 'PCS', 129, 87, 12486, 100, 0.00, 22000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(610, 'SO-SSS', 'Saos Sambal Saset ABC', NULL, NULL, 'PCS', 129, 91, 12486, 5, 7500.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(611, 'SO-TMS', 'Saos Tomat Saset ABC', '', '', 'PCS', 129, 91, 12486, 5, 0.00, 6500.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(612, 'SO-VOL', 'Mama Suka Saos Volcano', '', '', 'PCS', 129, 87, 12486, 200, 0.00, 35000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(613, 'SS-HG', 'Sarung Tangan', NULL, NULL, 'PCS', 131, 91, 12483, 12, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(614, 'SY-APPL', 'Syrup Apple Delifru', '', '', 'PCS', 133, 87, 12484, 0, 0.00, 110999.98, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(615, 'SY-BLGN', 'Syrup Blue Lagoon Delifru', '', '', 'PCS', 133, 89, 12484, 70, 0.00, 111000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(616, 'SY-BUTS', 'Syrup Butterscotch Trieste', '', '', 'PCS', 133, 89, 12484, 70, 77.00, 77000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(617, 'SY-CRML', 'Syrup Caramel Trieste', '', '', 'PCS', 133, 89, 12484, 70, 77.00, 77000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(618, 'SY-HAZE', 'Syrup Hazelnut Trieste', '', '', 'PCS', 133, 89, 12484, 70, 77.00, 77000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(619, 'SY-LMEX', 'Syrup Lemon Extract', NULL, NULL, 'PCS', 133, 89, 12484, 50, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(620, 'SY-LYCHE', 'Syrup Lychee Delifru', '', '', 'PCS', 133, 89, 12484, 70, 0.00, 110999.97, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(621, 'SY-RSTD', 'Syrup Roasted Almond Davinci', '', '', 'PCS', 133, 89, 12484, 90, 77.00, 77000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(622, 'TB-TEA', 'Tea Bag', NULL, NULL, 'PCS', 134, 91, 12486, 10, 260.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(623, 'UT-KRB', 'Kertas Roll Bon', NULL, NULL, 'PCS', 131, 91, 12483, 2, 7000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(630, 'SY-BEINDLCE', 'Syrup BEIN DOLCE', '', '', 'PCS', 133, 91, 12471, 0, 0.00, 72500.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(631, 'SY-BEINPCH', 'Syrup BEIN Peach', '', '', 'PCS', 133, 91, 12471, 0, 72500.00, 72500.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(632, 'BU-BKBB', 'Bumbu Kentang BBQ Indofood', '', '', 'PCS', 121, 87, 12486, 25, 200.00, 5000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'baku'),
+(633, 'BU-BKJB', 'Bumbu Kentang Jagung Bakar Indofood', '', '', 'PCS', 121, 87, 12486, 25, 200.00, 5000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(635, 'SER-BONC10', 'Bon Cabe lvl 10', '', '', 'PCS', 125, 91, 12486, 0, 0.00, 10000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(637, 'BB-BRS', 'Resto Beras SLYP Super 5kg', '', '', 'PCS', 121, 87, 12486, 1000, 16.00, 78000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(644, 'SAY-CBE', 'Cabe Merah', '', '', 'PCS', 130, 87, 12482, 0, 0.00, 35000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(647, 'ZZ-Cireng Rujak pak', 'Cireng Rujak isi 16', '', '', 'PCS', 124, 90, 12486, 0, 0.00, 12500.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(648, 'ZZ-CKR', 'Cikur', NULL, NULL, 'PCS', 121, 91, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(652, 'ZZ-DJ', 'Daun Jeruk 36gr', NULL, NULL, 'PCS', 121, 87, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(653, 'ZZ-DNPIS', 'Daun Pisang', NULL, NULL, 'PCS', 125, 91, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(654, 'BB-FILMA', 'Mentega Filma (200 gr)', '', '', 'PCS', 121, 91, 12486, 0, 38.00, 7500.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(655, 'ZZ-GCLE', 'Galon Cleo', NULL, NULL, 'PCS', 121, 91, 12476, 0, 23000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(656, 'ZZ-GLIS', 'Galon Isi Ulang', NULL, NULL, 'PCS', 121, 91, 12476, 0, 6000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(657, 'ZZ-HASOAP', 'Yuri Hand Wash 375 ML', NULL, NULL, 'PCS', 128, 91, 12486, 0, 19000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(658, 'ZZ-HASOP-YOA', 'Yoa Hand Wash 4L', NULL, NULL, 'PCS', 128, 91, 12473, 0, 95000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(660, 'ZZ-HEK', 'Isi Ulang Hektar', NULL, NULL, 'PCS', 132, 90, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(663, 'ZZ-KAVSS', 'Kentang Aviko Shoestring 2.5 Kg', NULL, NULL, 'PCS', 124, 90, 12486, 0, 82000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(664, 'ZZ-KMCSS', 'Kentang Mcain Shoestring 1kg', NULL, NULL, 'PCS', 124, 88, 12486, 0, 28000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(665, 'ZZ-KRO', 'Kerupuk Oren', NULL, NULL, 'PCS', 121, 87, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(666, 'ZZ-KRP', 'Kerupuk Putih', NULL, NULL, 'PCS', 121, 87, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(668, 'ZZ-LMO', 'Lemon', NULL, NULL, 'PCS', 121, 91, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(676, 'BB-MNYKG', 'Sunco 2L Pouch', '', '', 'PCS', 121, 89, 12486, 0, 0.00, 45000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(677, 'BB-MNYKS1', 'Sunco 1L Pouch', '', '', 'PCS', 121, 89, 12486, 0, 22500.00, 224999.99, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(678, 'ZZ-MNYKSUN', 'Minyak Sunco 5 Liter', '', '', 'PCS', 121, 89, 12472, 0, 0.00, 118000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(683, 'ZZ-OAT', 'Oatside Milk 1L', NULL, NULL, 'PCS', 121, 91, 12484, 0, 42000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(684, 'SER-PARS', 'Jays Parsley', '', '', 'PCS', 125, 91, 12486, 0, 0.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(685, 'ZZ-PEN', 'Pulpen', NULL, NULL, 'PCS', 132, 91, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(686, 'ZZ-PINE', 'Garnish Nanas Kering 100gr', NULL, NULL, 'PCS', 125, 90, 12480, 0, 56000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(687, 'ZZ-PPS', 'Pocky', NULL, NULL, 'PCS', 125, 90, 12486, 0, 8000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(688, 'ZZ-RBL', 'Buah Lychee Red Boat', NULL, NULL, 'PCS', 121, 90, 12484, 0, 27500.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(690, 'ZZ-SAL', 'Salada', NULL, NULL, 'PCS', 121, 91, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(691, 'ZZ-SDO', 'Soda', NULL, NULL, 'PCS', 121, 91, 12484, 5, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(692, 'ZZ-SDT', 'Sedotan', NULL, NULL, 'PCS', 131, 90, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(697, 'SO-SMAYO', 'Mayo Gourment 1KG', '', '', 'PCS', 129, 90, 12486, 0, 0.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(698, 'SO-SOSTRF', 'Delmonte Saos Tomat Refill', '', '', 'PCS', 129, 87, 12486, 300, 17.00, 17000.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(699, 'ZZ-SPDLH', 'Spidol Hitam', NULL, NULL, 'PCS', 132, 91, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(700, 'PK-SPDLM', 'Spidol Merah', '', '', 'PCS', 132, 91, 12483, 0, 0.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(701, 'ZZ-SPEL', 'Super pell', NULL, NULL, 'PCS', 128, 91, 12486, 0, 16000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(702, 'ZZ-SPG', 'Sponge', NULL, NULL, 'PCS', 128, 91, 12486, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(703, 'SO-SSM', 'Saos Sambel Delmonte 1KG', '', '', 'PCS', 129, 87, 12486, 300, 21000.00, 0.00, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(705, 'ZZ-SUN', 'Sunlight Pouch 610 ML', NULL, NULL, 'PCS', 128, 91, 12486, 0, 9899.97, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(708, 'ZZ-TLG', 'Tulang Seblak', NULL, NULL, 'PCS', 121, 91, 12482, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(711, 'ZZ-TRASH', 'Trash Bag (L)', NULL, NULL, 'PCS', 128, 90, 12486, 0, 22000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(715, 'ZZ-WDGS', 'Spicy Wedges 1KG', NULL, NULL, 'PCS', 124, 88, 12486, 0, 65000.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(716, 'ZZ-WDT-L', 'Wadah Takeaway (Large)', NULL, NULL, 'PCS', 131, 91, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(717, 'ZZ-WDT-S', 'Wadah Takeaway (small)', NULL, NULL, 'PCS', 131, 90, 12483, 0, 0.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(720, 'ZZ-ZPTIE', 'Zip Tie', NULL, NULL, 'PCS', 131, 90, 12483, 0, 5500.00, NULL, 0.00, NULL, 7, '2026-05-31 10:45:54', NULL, 'non_baku'),
+(721, 'TEST002', 'Barang Test', '123456', NULL, 'PCS', NULL, NULL, NULL, 10, 5000.00, NULL, 7000.00, NULL, NULL, '2026-06-09 16:25:46', '2026-12-31', 'non_baku');
 
 -- --------------------------------------------------------
 
@@ -333,6 +334,17 @@ CREATE TABLE `conversi_po_detail` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `conversi_po_detail`
+--
+
+INSERT INTO `conversi_po_detail` (`id`, `purchase_order_id`, `detail_purchase_order_id`, `satuan_asal_id`, `satuan_tujuan_id`, `nilai_konversi`, `created_at`, `updated_at`) VALUES
+(7, 3, 3, 91, 89, 1000.00, '2026-06-01 13:22:15', '2026-06-01 13:22:15'),
+(8, 4, 4, 90, 87, 500.00, '2026-06-01 13:38:01', '2026-06-01 13:38:01'),
+(9, 5, 5, 86, 91, 1000.00, '2026-06-01 14:20:01', '2026-06-01 14:20:01'),
+(10, 5, 6, 86, 91, 1000.00, '2026-06-01 14:20:01', '2026-06-01 14:20:01'),
+(11, 6, 7, 91, 89, 5000.00, '2026-06-20 09:24:43', '2026-06-20 09:24:43');
+
 -- --------------------------------------------------------
 
 --
@@ -350,6 +362,13 @@ CREATE TABLE `detail_direct_purchase` (
   `foto` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `detail_direct_purchase`
+--
+
+INSERT INTO `detail_direct_purchase` (`id`, `direct_purchase_id`, `barang_id`, `jumlah`, `harga_satuan`, `total_harga`, `keterangan`, `foto`, `created_at`) VALUES
+(188, 172, 533, 20, 186.00, 3720.00, '', '1780511596_6a20736ca2667.png', '2026-06-03 18:33:16');
 
 -- --------------------------------------------------------
 
@@ -373,6 +392,17 @@ CREATE TABLE `detail_purchase_order` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `updated_by` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `detail_purchase_order`
+--
+
+INSERT INTO `detail_purchase_order` (`id`, `purchase_order_id`, `barang_id`, `jumlah`, `satuan_id`, `harga_satuan`, `total_harga`, `keterangan_detail`, `keterangan`, `created_at`, `status`, `created_by`, `updated_at`, `updated_by`) VALUES
+(3, 3, 554, 2, NULL, 22000.00, 44000.00, '', 'barang abis', '2026-06-01 13:22:15', 'rejected', 0, '2026-06-01 14:18:53', NULL),
+(4, 4, 546, 1, NULL, 49000.00, 49000.00, '', NULL, '2026-06-01 13:38:01', 'completed', 0, '2026-06-01 14:09:01', NULL),
+(5, 5, 593, 2, NULL, 950.00, 1900.00, '', NULL, '2026-06-01 14:20:01', 'completed', 0, '2026-06-01 14:20:44', NULL),
+(6, 5, 594, 2, NULL, 200.00, 400.00, '', 'habis', '2026-06-01 14:20:01', 'rejected', 0, '2026-06-01 14:20:35', NULL),
+(7, 6, 678, 1, NULL, 118000.00, 118000.00, '', NULL, '2026-06-20 09:24:43', 'menunggu', 0, '2026-06-20 09:24:43', NULL);
 
 --
 -- Triggers `detail_purchase_order`
@@ -437,6 +467,15 @@ CREATE TABLE `detail_transaksi_stok` (
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `detail_transaksi_stok`
+--
+
+INSERT INTO `detail_transaksi_stok` (`id`, `transaksi_stok_id`, `barang_id`, `detail_barang`, `jumlah`, `created_at`) VALUES
+(1, 4, 554, 'Susu Diamond UHT', 12000, '2026-06-04 01:32:38'),
+(2, 5, 558, 'Arabica Beans Kopsu', 1000, '2026-06-04 01:32:48'),
+(4, 7, 558, '0', 100, '2026-06-30 23:57:16');
+
 -- --------------------------------------------------------
 
 --
@@ -473,6 +512,13 @@ CREATE TABLE `direct_purchase` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `barang_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `direct_purchase`
+--
+
+INSERT INTO `direct_purchase` (`id`, `no_transaksi`, `tanggal`, `no_nota`, `nama_toko`, `supplier_id`, `total_item`, `total_harga`, `keterangan`, `status`, `created_by`, `created_at`, `updated_at`, `barang_id`) VALUES
+(172, 'DP-2026060001', '2026-06-03', NULL, 'warung', NULL, 20, 3720.00, '', 'payment', 7, '2026-06-03 18:33:16', '2026-06-03 18:33:23', NULL);
 
 -- --------------------------------------------------------
 
@@ -530,7 +576,8 @@ CREATE TABLE `gudang_stok` (
 --
 
 INSERT INTO `gudang_stok` (`id`, `nama_gudang`, `barang_id`, `gudang_id`, `stok_awal`, `stok_terpakai`, `stok_sisa`, `expire_date`, `batch_number`, `harga_beli`, `modified_by`, `created_at`, `updated_at`, `last_reset`, `created_by`, `updated_by`, `stok_minimum`, `jumlah`, `detail_barang`) VALUES
-(2, NULL, 554, 13, 0, 0, 0, NULL, NULL, 0.00, 1, '2026-06-01 01:07:05', '2026-06-01 01:23:57', NULL, 1, NULL, 2000, 0, '');
+(2, NULL, 554, 13, 1000, 0, 1000, '0000-00-00', NULL, 0.00, 7, '2026-06-01 01:07:05', '2026-07-01 14:11:05', '2026-07-01 14:11:05', 1, NULL, 200, 12000, ''),
+(3, NULL, 558, 13, 500, 0, 500, NULL, NULL, 0.00, 7, '2026-06-04 01:32:25', '2026-07-01 14:11:05', '2026-07-01 14:11:05', 7, NULL, 20, 1100, '');
 
 --
 -- Triggers `gudang_stok`
@@ -762,7 +809,9 @@ INSERT INTO `gudang_stok_daily` (`id`, `gudang_id`, `barang_id`, `stok_awal`, `s
 (0, 13, 551, 2, 0, 2, 2, '2026-05-18', '2026-05-31 17:37:55', NULL, NULL, NULL),
 (0, 13, 552, 2, 0, 2, 1, '2026-05-18', '2026-05-31 17:37:55', NULL, NULL, NULL),
 (0, 13, 554, 0, 0, 0, 2000, '2026-06-01', '2026-05-31 17:56:39', NULL, NULL, NULL),
-(0, 13, 554, 0, 0, 0, 2000, '2026-06-01', '2026-05-31 18:07:05', NULL, NULL, NULL);
+(0, 13, 554, 0, 0, 0, 2000, '2026-06-01', '2026-05-31 18:07:05', NULL, NULL, NULL),
+(0, 13, 558, 0, 0, 0, 20, '2026-06-04', '2026-06-03 18:32:25', NULL, NULL, NULL),
+(0, 13, 554, 12000, 0, 12000, 2000, '2026-06-04', '2026-07-01 07:05:18', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -807,7 +856,18 @@ INSERT INTO `gudang_stok_history` (`id`, `gudang_stok_id`, `gudang_id`, `barang_
 (0, 2, 13, 554, 2000, 2000, 1996, 1995, 4, 5, 'keluar', -1, 'Stok terpakai berubah dari 1996 menjadi 1995', 'UPDATE', 1, '2026-05-31 18:23:44'),
 (0, 2, 13, 554, 2000, 2000, 1995, 995, 5, 1005, 'keluar', -1000, 'Stok terpakai berubah dari 1995 menjadi 995', 'UPDATE', 1, '2026-05-31 18:23:57'),
 (0, 2, 13, 554, 2000, 4000, 995, 995, 1005, 1005, 'masuk', 2000, 'Stok awal berubah dari 2000 menjadi 4000', 'UPDATE', 1, '2026-05-31 18:24:34'),
-(0, 2, 13, 554, 4000, 0, 995, 0, 1005, 0, 'masuk', -4000, 'Stok awal berubah dari 4000 menjadi 0', 'UPDATE', 1, '2026-05-31 18:26:15');
+(0, 2, 13, 554, 4000, 0, 995, 0, 1005, 0, 'masuk', -4000, 'Stok awal berubah dari 4000 menjadi 0', 'UPDATE', 1, '2026-05-31 18:26:15'),
+(0, 3, 13, 558, 0, 0, 0, 0, 0, 0, 'masuk', 0, 'Stok awal', 'INIT', 7, '2026-06-03 18:32:25'),
+(0, 2, 13, 554, 0, 12000, 0, 0, 0, 12000, 'masuk', 12000, 'Stok awal berubah dari 0 menjadi 12000', 'UPDATE', 7, '2026-06-03 18:32:38'),
+(0, 2, 13, 554, 0, 12000, 0, 0, 0, 12000, 'masuk', 12000, 'Stok masuk (quick) | Detail: Susu Diamond UHT', 'QUICK_MASUK', 7, '2026-06-04 13:32:38'),
+(0, 3, 13, 558, 0, 1000, 0, 0, 0, 1000, 'masuk', 1000, 'Stok awal berubah dari 0 menjadi 1000', 'UPDATE', 7, '2026-06-03 18:32:48'),
+(0, 3, 13, 558, 0, 1000, 0, 0, 0, 1000, 'masuk', 1000, 'Stok masuk (quick) | Detail: Arabica Beans Kopsu', 'QUICK_MASUK', 7, '2026-06-04 13:32:48'),
+(0, 3, 13, 558, 1000, 1100, 0, 0, 1000, 1000, 'masuk', 100, 'Stok awal berubah dari 1000 menjadi 1100', 'UPDATE', 7, '2026-06-30 16:57:16'),
+(0, 2, 13, 554, 12000, 12000, 0, 11000, 12000, 1000, 'keluar', 11000, 'Stok terpakai berubah dari 0 menjadi 11000', 'UPDATE', 7, '2026-07-01 07:05:18'),
+(0, 2, 13, 554, 12000, 12000, 11000, 11000, 1000, 1000, 'update', 0, 'Update data stok', 'UPDATE', 7, '2026-07-01 07:05:40'),
+(0, 3, 13, 558, 1100, 1100, 0, 600, 1000, 500, 'keluar', 600, 'Stok terpakai berubah dari 0 menjadi 600', 'UPDATE', 7, '2026-07-01 07:11:00'),
+(0, 2, 13, 554, 12000, 1000, 11000, 0, 1000, 1000, 'masuk', -11000, 'Stok awal berubah dari 12000 menjadi 1000', 'UPDATE', 7, '2026-07-01 07:11:05'),
+(0, 3, 13, 558, 1100, 500, 600, 0, 500, 500, 'masuk', -600, 'Stok awal berubah dari 1100 menjadi 500', 'UPDATE', 7, '2026-07-01 07:11:05');
 
 -- --------------------------------------------------------
 
@@ -1494,6 +1554,16 @@ CREATE TABLE `purchase_order` (
   `keterangan_reject` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `purchase_order`
+--
+
+INSERT INTO `purchase_order` (`id`, `nomor`, `no_po`, `tanggal`, `supplier_id`, `total_item`, `total_harga`, `keterangan`, `foto`, `status`, `purchase_date`, `completed_at`, `updated_at`, `created_by`, `created_at`, `keterangan_complete`, `keterangan_reject`) VALUES
+(3, NULL, 'PO-2026060001', '2026-06-01', 12486, 0, 0.00, 'barang abis', NULL, 'rejected', NULL, NULL, '2026-06-01 21:18:53', 7, '2026-06-01 13:22:15', NULL, NULL),
+(4, NULL, 'PO-2026060002', '2026-06-01', 12484, 1, 49000.00, '', 'uploads/po/po_20260601160901_6a1d927d2d7db.jpeg', 'completed', '2026-06-01', '2026-06-01 21:09:01', '2026-06-01 21:09:01', 7, '2026-06-01 13:38:01', 'sano', NULL),
+(5, NULL, 'PO-2026060003', '2026-06-01', 12470, 2, 2300.00, '', 'uploads/po/po_20260601162044_6a1d953c7639a.jpeg', 'completed', '2026-06-01', '2026-06-01 21:20:44', '2026-06-01 21:20:44', 7, '2026-06-01 14:20:01', 'sano', NULL),
+(6, NULL, 'PO-2026060004', '2026-06-20', 12472, 1, 118000.00, '', NULL, 'rejected', NULL, NULL, NULL, 7, '2026-06-20 09:24:43', NULL, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -1848,6 +1918,14 @@ CREATE TABLE `surat_jalan` (
   `status_pembayaran` varchar(20) DEFAULT 'belum_dibayar'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `surat_jalan`
+--
+
+INSERT INTO `surat_jalan` (`id`, `po_id`, `surat_jalan_number`, `surat_jalan_date`, `created_at`, `tujuan`, `status`, `created_by`, `status_pembayaran`) VALUES
+(1, 3, '322375982375892', '2026-06-01', '2026-06-01 13:24:44', '', 'Draft', '7', 'lunas'),
+(2, 4, '322375982375896', '2026-06-01', '2026-06-01 13:38:32', '', 'Draft', '7', 'lunas');
+
 -- --------------------------------------------------------
 
 --
@@ -1861,6 +1939,14 @@ CREATE TABLE `surat_jalan_items` (
   `quantity` int(11) NOT NULL,
   `satuan_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `surat_jalan_items`
+--
+
+INSERT INTO `surat_jalan_items` (`id`, `surat_jalan_id`, `barang_id`, `quantity`, `satuan_id`) VALUES
+(1, 1, 554, 2000, 89),
+(2, 2, 546, 1, 90);
 
 -- --------------------------------------------------------
 
@@ -1912,6 +1998,15 @@ CREATE TABLE `transaksi_stok` (
   `jumlah` int(11) DEFAULT 0,
   `barang_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `transaksi_stok`
+--
+
+INSERT INTO `transaksi_stok` (`id`, `no_transaksi`, `tanggal`, `gudang_id`, `jenis_transaksi`, `keterangan`, `created_by`, `created_at`, `updated_at`, `jumlah`, `barang_id`) VALUES
+(4, 'SM-202606040001', '2026-06-04', 13, 'masuk', '', 7, '2026-06-03 18:32:38', '2026-06-03 18:32:38', 12000, NULL),
+(5, 'SM-202606040002', '2026-06-04', 13, 'masuk', '', 7, '2026-06-03 18:32:48', '2026-06-03 18:32:48', 1000, NULL),
+(7, 'SM-202606300001', '2026-06-30', 13, 'masuk', '', 7, '2026-06-30 16:57:16', '2026-06-30 16:57:16', 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -2061,7 +2156,7 @@ INSERT INTO `user_roles` (`id`, `user_id`, `role_id`, `created_at`) VALUES
 (64, 48, 21, '2026-02-28 16:18:08'),
 (65, 52, 21, '2026-02-28 16:18:16'),
 (208, 53, 24, '2026-05-31 12:41:18'),
-(242, 7, 1, '2026-05-31 18:16:29');
+(746, 7, 1, '2026-07-01 14:55:43');
 
 -- --------------------------------------------------------
 
@@ -2705,7 +2800,7 @@ ALTER TABLE `vendor_refund_items`
 -- AUTO_INCREMENT for table `barang`
 --
 ALTER TABLE `barang`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=721;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=727;
 
 --
 -- AUTO_INCREMENT for table `calls`
@@ -2723,19 +2818,19 @@ ALTER TABLE `chat_messages`
 -- AUTO_INCREMENT for table `conversi_po_detail`
 --
 ALTER TABLE `conversi_po_detail`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `detail_direct_purchase`
 --
 ALTER TABLE `detail_direct_purchase`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=188;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=189;
 
 --
 -- AUTO_INCREMENT for table `detail_purchase_order`
 --
 ALTER TABLE `detail_purchase_order`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `detail_transaksi_stock`
@@ -2747,7 +2842,7 @@ ALTER TABLE `detail_transaksi_stock`
 -- AUTO_INCREMENT for table `detail_transaksi_stok`
 --
 ALTER TABLE `detail_transaksi_stok`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `detail_transaksi_transfer`
@@ -2759,7 +2854,7 @@ ALTER TABLE `detail_transaksi_transfer`
 -- AUTO_INCREMENT for table `direct_purchase`
 --
 ALTER TABLE `direct_purchase`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=172;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
 
 --
 -- AUTO_INCREMENT for table `gudang`
@@ -2771,7 +2866,7 @@ ALTER TABLE `gudang`
 -- AUTO_INCREMENT for table `gudang_stok`
 --
 ALTER TABLE `gudang_stok`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `item_mapping`
@@ -2903,7 +2998,7 @@ ALTER TABLE `product_detail`
 -- AUTO_INCREMENT for table `purchase_order`
 --
 ALTER TABLE `purchase_order`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `purchase_orders`
@@ -3005,13 +3100,13 @@ ALTER TABLE `supplier_barang`
 -- AUTO_INCREMENT for table `surat_jalan`
 --
 ALTER TABLE `surat_jalan`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `surat_jalan_items`
 --
 ALTER TABLE `surat_jalan_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `toko`
@@ -3029,7 +3124,7 @@ ALTER TABLE `transaksi_stock`
 -- AUTO_INCREMENT for table `transaksi_stok`
 --
 ALTER TABLE `transaksi_stok`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `transaksi_transfer`
@@ -3065,7 +3160,7 @@ ALTER TABLE `user_activity_log`
 -- AUTO_INCREMENT for table `user_roles`
 --
 ALTER TABLE `user_roles`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=243;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=747;
 
 --
 -- AUTO_INCREMENT for table `vendor_refund`

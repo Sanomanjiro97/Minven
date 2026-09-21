@@ -257,6 +257,39 @@ if (!function_exists('bo_export_pdf_download')) {
     }
 }
 
+if (!function_exists('bo_ensure_pendapatan_manual_table')) {
+    function bo_ensure_pendapatan_manual_table() {
+        $conn = $GLOBALS['boMainConn'] ?? ($GLOBALS['conn'] ?? null);
+        if (!$conn instanceof mysqli || $conn->connect_error) {
+            return false;
+        }
+
+        $sql = "
+            CREATE TABLE IF NOT EXISTS pendapatan_manual (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                tanggal DATE NOT NULL UNIQUE,
+                total_omset_hari DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_dine_in DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_take_away DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_online_order DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_cash_sales DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_qr_gopay DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_edc DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_online_payment DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_transfers DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_shopeefood DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_gofood_gopay DECIMAL(15,2) NOT NULL DEFAULT 0,
+                total_ovo DECIMAL(15,2) NOT NULL DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ";
+
+        $ok = $conn->query($sql);
+        return $ok !== false;
+    }
+}
+
 if (!function_exists('bo_nav_items')) {
     function bo_nav_items() {
         return [
@@ -292,6 +325,13 @@ if (!function_exists('bo_nav_items')) {
                     'href' => bo_url_for('reports/finance.php'),
                 ],
                 [
+                    'key' => 'transaksi',
+                    'label' => 'Transaksi',
+                    'caption' => 'Kelola Omset & Pengeluaran',
+                    'icon' => 'bi bi-wallet2',
+                    'href' => bo_url_for('reports/transaksi.php'), // <-- Berhasil diarahkan ke folder reports
+                ],
+                [
                     'key' => 'reports-inventory',
                     'label' => 'Inventory',
                     'caption' => 'Stok dan pergerakan',
@@ -312,23 +352,31 @@ if (!function_exists('bo_nav_items')) {
                     'icon' => 'bi bi-graph-up-arrow',
                     'href' => bo_url_for('reports/item_movement.php'),
                 ],
+                 [
+            'key' => 'hpp',
+            'label' => 'Data Base HPP',
+            'caption' => 'Kelola harga pokok',
+            'icon' => 'bi bi-calculator',
+            'href' => bo_url_for('hpp/index.php'),
+        ],
             ],
             'management' => [
-                [
-                    'key' => 'users',
-                    'label' => 'Users',
-                    'caption' => 'Kelola akun',
-                    'icon' => 'bi bi-people',
-                    'href' => bo_url_for('users.php'),
-                ],
-                [
-                    'key' => 'roles',
-                    'label' => 'Roles',
-                    'caption' => 'Hak akses',
-                    'icon' => 'bi bi-shield-check',
-                    'href' => bo_url_for('roles.php'),
-                ],
-            ],
+        [
+            'key' => 'users',
+            'label' => 'Users',
+            'caption' => 'Kelola akun',
+            'icon' => 'bi bi-people',
+            'href' => bo_url_for('users.php'),
+        ],
+        [
+            'key' => 'roles',
+            'label' => 'Roles',
+            'caption' => 'Hak akses',
+            'icon' => 'bi bi-shield-check',
+            'href' => bo_url_for('roles.php'),
+        ],
+       
+    ],
             'system' => [
                 [
                     'key' => 'main-app',

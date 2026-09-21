@@ -1400,6 +1400,8 @@ if ($sidebar_profile_picture !== '') {
                 </ul>
             </div>
         <?php endif; ?>
+        
+        </a>
     </div>
 
     <div class="minven-sidebar__bottom">
@@ -1659,6 +1661,13 @@ if ($sidebar_profile_picture !== '') {
                     </ul>
                 </li>
                 <?php endif; ?>
+
+                <!-- Pengeluaran -->
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center" href="<?= url_for('backoffice/reports/pengeluaran.php') ?>">
+                        <i class="bi bi-cash me-1"></i> Pengeluaran
+                    </a>
+                </li>
 
                 <!-- Backoffice -->
                 <?php if (hasAccess('backoffice')): ?>

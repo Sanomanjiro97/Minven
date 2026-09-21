@@ -45,7 +45,7 @@ $total = 0.0;
 if ($boMainConn) {
     $stmt = $boMainConn->prepare("
         SELECT dp.id, dp.no_transaksi, dp.tanggal, dp.total_item, dp.total_harga, dp.status, dp.keterangan, dp.nama_toko,
-               s.nama_supplier, s.kode_supplier, s.telepon, s.email
+               s.nama_supplier, s.kode_supplier, s.telepon, s.email, dp.payment_method
         FROM direct_purchase dp
         LEFT JOIN supplier s ON s.id = dp.supplier_id
         WHERE dp.id = ?
@@ -118,13 +118,20 @@ bo_render_shell_start([
                     <div class="text-muted small">Tanggal</div>
                     <div class="fw-bold"><?= htmlspecialchars((string)($header['tanggal'] ?? '')) ?></div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="text-muted small">Supplier</div>
                     <div class="fw-bold"><?= htmlspecialchars((string)($header['nama_supplier'] ?? '-')) ?></div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="text-muted small">Status</div>
                     <div class="fw-bold"><?= htmlspecialchars((string)($header['status'] ?? '-')) ?></div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-muted small">Metode Pembayaran</div>
+                    <div class="fw-bold">
+                        <?php $pm = $header['payment_method'] ?? 'cash'; ?>
+                        <span class="badge <?= $pm === 'cash' ? 'bg-success' : 'bg-primary' ?>"><?= strtoupper($pm) ?></span>
+                    </div>
                 </div>
                 <div class="col-md-6">
                     <div class="text-muted small">Nama Toko</div>

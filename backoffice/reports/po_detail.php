@@ -38,6 +38,27 @@ if ($poId <= 0) {
     exit();
 }
 
+// Handle payment method update
+$successMessage = '';
+$errorMessage = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_method'])) {
+    $paymentMethod = $_POST['payment_method'];
+    if ($paymentMethod === 'cash' || $paymentMethod === 'saldo') {
+        if ($boMainConn) {
+            $stmt = $boMainConn->prepare("UPDATE purchase_order SET payment_method = ? WHERE id = ?");
+            if ($stmt) {
+                $stmt->bind_param('si', $paymentMethod, $poId);
+                if ($stmt->execute()) {
+                    $successMessage = 'Metode pembayaran berhasil diperbarui!';
+                } else {
+                    $errorMessage = 'Gagal memperbarui metode pembayaran: ' . $stmt->error;
+                }
+                $stmt->close();
+            }
+        }
+    }
+}
+
 $header = null;
 $items = [];
 $total = 0.0;
@@ -48,6 +69,7 @@ if ($boMainConn) {
 
     $stmt = $boMainConn->prepare("
         SELECT po.id, po.no_po, po.tanggal, po.total_item, po.total_harga, po.status, po.keterangan,
+               po.payment_method,
                s.nama_supplier, s.kode_supplier, s.telepon, s.email
         FROM purchase_order po
         LEFT JOIN supplier s ON s.id = po.supplier_id
@@ -63,17 +85,22 @@ if ($boMainConn) {
 
     $isRejectedPo = strtolower(trim((string)($header['status'] ?? ''))) === 'rejected';
 
+    // Query Detail PO diselaraskan dengan view.php (join Satuan, Konversi, & Gambar)
     $sqlItems = "
-        SELECT d.jumlah, d.harga_satuan, d.total_harga, d.keterangan_detail,
-               b.kode_barang, b.nama_barang
+        SELECT d.id, d.jumlah, d.harga_satuan, d.total_harga, d.keterangan_detail, d.status,
+               b.kode_barang, b.nama_barang, b.gambar,
+               COALESCE(s_konv.nama_satuan, s.nama_satuan) as nama_satuan
         FROM detail_purchase_order d
         LEFT JOIN barang b ON b.id = d.barang_id
+        LEFT JOIN satuan s ON b.satuan_id = s.id
+        LEFT JOIN conversi_po_detail cpd ON d.id = cpd.detail_purchase_order_id
+        LEFT JOIN satuan s_konv ON cpd.satuan_asal_id = s_konv.id
         WHERE d.purchase_order_id = ?
     ";
     if ($detailStatusExists && !$isRejectedPo) {
         $sqlItems .= " AND (d.status IS NULL OR d.status != 'rejected')";
     }
-    $sqlItems .= " ORDER BY b.nama_barang ASC, d.id ASC";
+    $sqlItems .= " ORDER BY b.kode_barang ASC, d.id ASC";
 
     $stmt = $boMainConn->prepare($sqlItems);
     if ($stmt) {
@@ -81,9 +108,27 @@ if ($boMainConn) {
         $stmt->execute();
         $res = $stmt->get_result();
         while ($res && ($r = $res->fetch_assoc())) {
+            $qty = (int)($r['jumlah'] ?? 0);
+            $hargaSatuan = (float)($r['harga_satuan'] ?? 0);
+            
+            // Prioritaskan kalkulasi manual jika database total_harga kosong/0
+            $totalHarga = (float)($r['total_harga'] ?? 0);
+            if ($totalHarga <= 0) {
+                $totalHarga = $qty * $hargaSatuan;
+            }
+            if ($hargaSatuan <= 0 && $totalHarga > 0) {
+                $hargaSatuan = $totalHarga / $qty;
+            }
+
+            $r['harga_satuan'] = $hargaSatuan;
+            $r['total_harga'] = $totalHarga;
+
             $items[] = $r;
-            $total += (float)($r['total_harga'] ?? ((float)$r['harga_satuan'] * (int)$r['jumlah']));
-            $totalItem += (int)($r['jumlah'] ?? 0);
+            
+            if (($r['status'] ?? '') !== 'rejected') {
+                $total += $totalHarga;
+                $totalItem += $qty;
+            }
         }
         $stmt->close();
     }
@@ -121,6 +166,12 @@ bo_render_shell_start([
 ]);
 ?>
 <div class="bo-card p-4 mb-4">
+            <?php if ($successMessage): ?>
+                <div class="alert alert-success mb-4"><?= htmlspecialchars($successMessage) ?></div>
+            <?php endif; ?>
+            <?php if ($errorMessage): ?>
+                <div class="alert alert-danger mb-4"><?= htmlspecialchars($errorMessage) ?></div>
+            <?php endif; ?>
             <div class="row g-2">
                 <div class="col-md-3">
                     <div class="text-muted small">No PO</div>
@@ -149,7 +200,21 @@ bo_render_shell_start([
                 </div>
                 <div class="col-md-6 text-md-end">
                     <div class="text-muted small">Total PO</div>
-                    <div class="fw-bold">Rp <?= number_format((float)($header['total_harga'] ?? $total), 0, ',', '.') ?></div>
+                    <div class="fw-bold text-primary fs-5">Rp <?= number_format((float)($header['total_harga']), 0, ',', '.') ?></div>
+                </div>
+                <div class="col-12">
+                    <form method="POST" class="row g-3 align-items-end">
+                        <div class="col-md-6">
+                            <label class="text-muted small">Metode Pembayaran</label>
+                            <select name="payment_method" class="form-select" required>
+                                <option value="cash" <?= $header['payment_method'] === 'cash' ? 'selected' : '' ?>>Cash</option>
+                                <option value="saldo" <?= $header['payment_method'] === 'saldo' ? 'selected' : '' ?>>Saldo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Simpan</button>
+                        </div>
+                    </form>
                 </div>
                 <?php if (trim((string)($header['keterangan'] ?? '')) !== ''): ?>
                     <div class="col-12">
@@ -171,38 +236,64 @@ bo_render_shell_start([
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
-                    <th>Kode</th>
-                    <th>Nama Item</th>
-                    <th>Keterangan</th>
-                    <th class="text-end">Qty</th>
-                    <th class="text-end">Harga</th>
-                    <th class="text-end">Total</th>
+                    <th width="5%">No</th>
+                    <th width="15%">Kode</th>
+                    <th width="20%">Nama Item</th>
+                    <th width="10%">Foto</th>
+                    <th width="10%" class="text-end">Qty</th>
+                    <th width="10%">Satuan</th>
+                    <th width="15%" class="text-end">Harga</th>
+                    <th width="15%" class="text-end">Total</th>
+                    <th width="20%">Keterangan</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($items)): ?>
-                    <tr><td colspan="6" class="text-center text-muted py-4">Detail PO kosong.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted py-4">Detail PO kosong.</td></tr>
                 <?php else: ?>
-                    <?php foreach ($items as $it): ?>
-                        <?php
-                            $qty = (int)($it['jumlah'] ?? 0);
-                            $harga = (float)($it['harga_satuan'] ?? 0);
-                            $sub = (float)($it['total_harga'] ?? ($qty * $harga));
-                            $namaItem = trim((string)($it['nama_barang'] ?? ''));
-                            if ($namaItem === '') $namaItem = trim((string)($it['keterangan_detail'] ?? ''));
-                        ?>
-                        <tr>
+                    <?php 
+                    $no = 1;
+                    foreach ($items as $it): 
+                        $qty = (int)($it['jumlah'] ?? 0);
+                        $harga = (float)($it['harga_satuan'] ?? 0);
+                        $sub = (float)($it['total_harga'] ?? ($qty * $harga));
+                        
+                        $namaItem = trim((string)($it['nama_barang'] ?? ''));
+                        if ($namaItem === '') {
+                            $namaItem = trim((string)($it['keterangan_detail'] ?? ''));
+                        }
+
+                        $isRejected = ($it['status'] ?? '') === 'rejected';
+                    ?>
+                        <tr class="<?= $isRejected ? 'table-danger text-decoration-line-through text-muted' : '' ?>">
+                            <td><?= $no++ ?></td>
                             <td><?= htmlspecialchars((string)($it['kode_barang'] ?? '-')) ?></td>
                             <td><?= htmlspecialchars($namaItem !== '' ? $namaItem : '-') ?></td>
-                            <td><?= htmlspecialchars((string)($it['keterangan_detail'] ?? '')) ?></td>
+                            <td>
+                                <?php
+                                    $gambarFile = !empty($it['gambar']) ? basename($it['gambar']) : '';
+                                    $gambarFsPath = $gambarFile ? (__DIR__ . '/../uploads/barang/' . $gambarFile) : '';
+                                    $gambarUrl = $gambarFile ? ('../uploads/barang/' . rawurlencode($gambarFile)) : '';
+                                ?>
+                                <?php if ($gambarFile && file_exists($gambarFsPath)): ?>
+                                    <a href="<?= htmlspecialchars($gambarUrl) ?>" target="_blank" rel="noopener">
+                                        <img src="<?= htmlspecialchars($gambarUrl) ?>" alt="Foto" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid #e9ecef;">
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
                             <td class="text-end"><?= number_format($qty) ?></td>
+                            <td><?= htmlspecialchars($it['nama_satuan'] ?? '-') ?></td>
                             <td class="text-end">Rp <?= number_format($harga, 0, ',', '.') ?></td>
                             <td class="text-end">Rp <?= number_format($sub, 0, ',', '.') ?></td>
+                            <td><?= htmlspecialchars((string)($it['keterangan_detail'] ?? '')) ?></td>
                         </tr>
                     <?php endforeach; ?>
                     <tr>
-                        <td colspan="5" class="text-end fw-bold">Total</td>
-                        <td class="text-end fw-bold">Rp <?= number_format((float)($header['total_harga'] ?? $total), 0, ',', '.') ?></td>
+                        <td colspan="7" class="text-end fw-bold text-uppercase">Grand Total (Non-Rejected)</td>
+                        <td class="text-end fw-bold text-primary">Rp <?= number_format((float)$header['total_harga'], 0, ',', '.') ?></td>
+                        <td></td>
                     </tr>
                 <?php endif; ?>
             </tbody>
