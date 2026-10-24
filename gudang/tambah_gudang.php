@@ -36,9 +36,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $stmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM gudang WHERE kode_gudang = ?");
         $stmt->bind_param('s', $kode_gudang);
-        $stmt->execute();
-        $cnt = $stmt->get_result()->fetch_assoc()['cnt'] ?? 0;
-        $stmt->close();
+        if (!$stmt->execute()) {
+            $stmt->close();
+            $error = 'Terjadi kesalahan database.';
+        } else {
+            $res = $stmt->get_result();
+            $cnt = ($res && $res instanceof mysqli_result && ($row = $res->fetch_assoc())) ? ($row['cnt'] ?? 0) : 0;
+            $stmt->close();
+        }
 
         if ($cnt > 0) {
             $error = 'Kode gudang sudah digunakan.';

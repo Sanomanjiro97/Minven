@@ -38,6 +38,7 @@ $isPembelianPage = (
     strpos($current_uri, $basePathForDetect . 'pembelian/direct/') !== false ||
     strpos($current_uri, $basePathForDetect . 'pembelian/surat jalan/') !== false
 );
+$isKasirPage = (strpos($current_uri, $basePathForDetect . 'kasir/') !== false);
 $isVendorRefundPage = (strpos($current_uri, $basePathForDetect . 'vendor_refund/') !== false);
 $isManufacturePage = (strpos($current_uri, $basePathForDetect . 'manufacture/') !== false);
 $isLaporanPage = (strpos($current_uri, $basePathForDetect . 'laporan/') !== false);
@@ -182,6 +183,7 @@ if ($sidebar_profile_picture !== '') {
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="<?= htmlspecialchars(url_for('mobile_enhancement.css')) ?>">
 <link rel="shortcut icon" type="image/png" href="<?= htmlspecialchars(url_for('asset/LOGO1.png')) ?>">
 <link rel="apple-touch-icon" href="<?= htmlspecialchars(url_for('asset/LOGO1.png')) ?>">
 
@@ -904,11 +906,7 @@ if ($sidebar_profile_picture !== '') {
 
         @media (max-width: 1199.98px) {
             .minven-navbar .minven-navbar__collapse {
-                margin-top: 8px;
-                padding: 10px;
-                background: rgba(255, 255, 255, 0.98);
-                border-radius: 12px;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+                display: none !important;
             }
 
             .minven-navbar .minven-navbar__collapse.show {
@@ -1120,7 +1118,7 @@ if ($sidebar_profile_picture !== '') {
 
             .minven-mobile-sheet .offcanvas-body {
                 padding: 12px 20px 24px 20px;
-                background: rgba(15, 23, 42, 0.98);
+                background: #102744 !important;
             }
 
             .minven-mobile-sheet .minven-sheet-handle {
@@ -1136,8 +1134,8 @@ if ($sidebar_profile_picture !== '') {
                 border-radius: 14px !important;
                 margin-bottom: 10px;
                 padding: 14px 16px;
-                background: rgba(255, 255, 255, 0.03);
-                color: rgba(255, 255, 255, 0.9);
+                background: rgba(255, 255, 255, 0.07) !important;
+                color: #ffffff !important;
                 transition: all 0.2s ease;
             }
             
@@ -1149,7 +1147,11 @@ if ($sidebar_profile_picture !== '') {
             .minven-mobile-sheet .list-group-item i {
                 width: 24px;
                 text-align: center;
-                color: #0056b3;
+                color: #8fc5ff !important;
+            }
+
+            .minven-mobile-sheet .btn-close {
+                filter: invert(1) grayscale(100%) brightness(200%);
             }
         }
 
@@ -1465,7 +1467,7 @@ if ($sidebar_profile_picture !== '') {
          </a>
 
         <!-- Mobile Toggle Button -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation" data-no-loader="true">
+        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#minvenMobileMenu" aria-controls="minvenMobileMenu" aria-expanded="false" aria-label="Buka menu utama" data-no-loader="true">
             <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -1614,24 +1616,33 @@ if ($sidebar_profile_picture !== '') {
                     </a>
                 </li>
                 <?php endif; ?>
-            <!---
-                
-                <?php if (hasAccess('order_management')): ?>
+
+                <?php if (hasAccess('cashier')): ?>
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center <?= $isKasirPage ? 'active' : '' ?>" href="<?= url_for('kasir/index.php') ?>">
+                        <i class="bi bi-receipt-cutoff me-1"></i> Kasir
+                    </a>
+                </li>
+                <?php endif; ?>
+
+                <?php if (hasAccess('order_management') || hasAccess('orders') || hasAccess('delivery') || hasAccess('mobile')): ?>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown" data-no-loader="true">
                         <i class="bi bi-cart me-1"></i> Order
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="<?= url_for('order/index.php') ?>"><i class="bi bi-list-ul me-1"></i> Daftar Order</a></li>
-                        <li><a class="dropdown-item" href="<?= url_for('order/create.php') ?>"><i class="bi bi-plus-circle me-1"></i> Buat Order</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="<?= url_for('order/items/index.php') ?>"><i class="bi bi-box me-1"></i> Kelola Items</a></li>
-                        <li><a class="dropdown-item" href="<?= url_for('order/categories/index.php') ?>"><i class="bi bi-tags me-1"></i> Kategori Items</a></li>
-                        <li><a class="dropdown-item" href="<?= url_for('order/tables/index.php') ?>"><i class="bi bi-table me-1"></i> Manajemen Tabel</a></li>
+                        <?php if (hasAccess('orders') || hasAccess('order_management')): ?>
+                            <li><a class="dropdown-item" href="<?= url_for('kasir/orders/index.php') ?>"><i class="bi bi-list-ul me-1"></i> Daftar Order</a></li>
+                        <?php endif; ?>
+                        <?php if (hasAccess('delivery')): ?>
+                            <li><a class="dropdown-item" href="<?= url_for('kasir/orders/index.php') ?>"><i class="bi bi-bicycle me-1"></i> Delivery</a></li>
+                        <?php endif; ?>
+                        <?php if (hasAccess('mobile')): ?>
+                            <li><a class="dropdown-item" href="<?= url_for('kasir/mobile/index.php') ?>"><i class="bi bi-phone me-1"></i> Mobile POS</a></li>
+                        <?php endif; ?>
                     </ul>
                 </li>
                 <?php endif; ?>
-                -->
                 <!-- Laporan -->
                 <?php if (hasAccess('laporan')): ?>
                 <li class="nav-item dropdown">
@@ -2333,6 +2344,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (target.matches('[data-bs-target="#minvenMobileMenu"]')) {
+            if (window.bootstrap?.Offcanvas) return;
             event.preventDefault();
             event.stopPropagation();
             if (mobileMenuEl?.classList.contains('show')) {
@@ -2348,6 +2360,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        if (target.matches('[data-bs-dismiss="offcanvas"]') && !window.bootstrap?.Offcanvas) {
+            event.preventDefault();
+            closeMobileMenu();
+            return;
+        }
+
         if (target.matches('.dropdown-item')) {
             closeDropdowns();
             closeCollapse();
@@ -2358,6 +2376,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.addEventListener('click', (event) => {
         if (!event.target || !event.target.closest) return;
+        if (event.target.closest('[data-bs-toggle="offcanvas"][data-bs-target="#minvenMobileMenu"]')) return;
+        if (mobileMenuEl?.contains(event.target)) return;
         const clickedInsideNavbar = event.target.closest('.minven-navbar');
         const clickedInsideSidebar = event.target.closest('.minven-sidebar');
         if (clickedInsideNavbar || clickedInsideSidebar) return;

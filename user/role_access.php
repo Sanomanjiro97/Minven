@@ -112,6 +112,11 @@ $available_menus = [
             'backoffice_roles' => 'Role Backoffice'
         ]
     ],
+    'cashier' => [
+        'name' => 'Kasir POS',
+        'icon' => 'bx-receipt',
+        'submenus' => []
+    ],
     'user' => [
         'name' => 'Manajemen User',
         'icon' => 'bx-user',

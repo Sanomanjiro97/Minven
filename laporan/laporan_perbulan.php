@@ -264,8 +264,10 @@ function getData($conn, $table, $id_barang_column, $jumlah_column, $tanggal_colu
             echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
         }
         $result = $stmt->get_result();
-        while ($row = $result->fetch_assoc()) {
-            $data[(int)$row['barang_id']] = (float)$row['total'];
+        if ($result && $result instanceof mysqli_result) {
+            while ($row = $result->fetch_assoc()) {
+                $data[(int)$row['barang_id']] = (float)$row['total'];
+            }
         }
         $stmt->close();
     } else {

@@ -95,6 +95,9 @@ try {
                 $user_id = $_SESSION['user_id'];
 
                 // Start transaction for atomic operation
+                if (!isset($conn) || !$conn instanceof mysqli) {
+                    throw new Exception("Koneksi database tidak tersedia");
+                }
                 $conn->begin_transaction();
 
                 try {
@@ -157,6 +160,9 @@ try {
                 $id = (int)$_POST['id'];
                 
                 // Start transaction
+                if (!isset($conn) || !$conn instanceof mysqli) {
+                    throw new Exception("Koneksi database tidak tersedia");
+                }
                 $conn->begin_transaction();
                 
                 try {
@@ -253,6 +259,9 @@ try {
                 
                 // Get current stock data
                 $getCurrentSql = "SELECT barang_id, stok_awal FROM gudang_stok WHERE id = ? AND gudang_id = ?";
+                if (!isset($conn) || !$conn instanceof mysqli) {
+                    throw new Exception("Koneksi database tidak tersedia");
+                }
                 $getCurrentStmt = $conn->prepare($getCurrentSql);
                 $getCurrentStmt->bind_param("ii", $id, $gudang_id);
                 $getCurrentStmt->execute();
@@ -419,6 +428,9 @@ try {
                 
                 // Validasi stok terpakai tidak melebihi stok awal
                 $checkSql = "SELECT stok_awal FROM gudang_stok WHERE id = ? AND gudang_id = ?";
+                if (!isset($conn) || !$conn instanceof mysqli) {
+                    throw new Exception("Koneksi database tidak tersedia");
+                }
                 $checkStmt = $conn->prepare($checkSql);
                 $checkStmt->bind_param("ii", $id, $gudang_id);
                 $checkStmt->execute();
@@ -469,6 +481,9 @@ try {
                 
                 // Validasi stok keluar tidak melebihi stok akhir
                 $checkSql = "SELECT stok_awal, stok_terpakai FROM gudang_stok WHERE id = ? AND gudang_id = ?";
+                if (!isset($conn) || !$conn instanceof mysqli) {
+                    throw new Exception("Koneksi database tidak tersedia");
+                }
                 $checkStmt = $conn->prepare($checkSql);
                 $checkStmt->bind_param("ii", $id, $gudang_id);
                 $checkStmt->execute();
@@ -540,6 +555,10 @@ try {
                 
                 // Validasi sisa stok tidak melebihi stok awal
                 $checkSql = "SELECT stok_awal FROM gudang_stok WHERE id = ? AND gudang_id = ?";
+                if (!isset($conn) || !$conn instanceof mysqli) {
+                    error_log("Database connection not available");
+                    throw new Exception("Koneksi database tidak tersedia");
+                }
                 $checkStmt = $conn->prepare($checkSql);
                 if (!$checkStmt) {
                     error_log("Prepare failed: " . $conn->error);
@@ -630,6 +649,9 @@ try {
                     throw new Exception("Item stok masuk tidak boleh kosong");
                 }
 
+                if (!isset($conn) || !$conn instanceof mysqli) {
+                    throw new Exception("Koneksi database tidak tersedia");
+                }
                 $conn->begin_transaction();
                 try {
                     $no_transaksi_date = str_replace('-', '', $tanggal);
@@ -644,7 +666,8 @@ try {
                     if (!$seqStmt->execute()) {
                         throw new Exception("Database execute error: " . $seqStmt->error);
                     }
-                    $seqRow = $seqStmt->get_result()->fetch_assoc();
+                    $seqRes = $seqStmt->get_result();
+                    $seqRow = ($seqRes && $seqRes instanceof mysqli_result) ? $seqRes->fetch_assoc() : null;
                     $sequence = str_pad(((int)($seqRow['count'] ?? 0)) + 1, 4, '0', STR_PAD_LEFT);
                     $no_transaksi = "SM-" . $no_transaksi_date . $sequence;
 

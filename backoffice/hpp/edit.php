@@ -3,7 +3,8 @@ require_once __DIR__ . '/../_init.php';
 bo_require_login();
 
 $id = intval($_GET['id']);
-$hpp = $boMainConn->query("SELECT * FROM hpp WHERE id = $id")->fetch_assoc();
+$res = $boMainConn->query("SELECT * FROM hpp WHERE id = $id");
+$hpp = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
 if (!$hpp) {
     header('Location: ' . bo_url_for('hpp/index.php'));
     exit;
@@ -12,6 +13,15 @@ if (!$hpp) {
 $detail_bahan = $boMainConn->query("SELECT d.*, b.nama_barang, b.kode_barang FROM hpp_detail_bahan d LEFT JOIN barang b ON d.barang_id = b.id WHERE d.hpp_id = $id");
 $detail_biaya = $boMainConn->query("SELECT * FROM hpp_detail_biaya WHERE hpp_id = $id");
 $barang_result = $boMainConn->query("SELECT id, kode_barang, nama_barang, harga_beli, harga_po FROM barang ORDER BY nama_barang");
+
+// Ambil data gudang untuk dropdown
+$gudang_options = [];
+$gudang_result = $boMainConn->query("SELECT id, nama_gudang FROM gudang ORDER BY nama_gudang ASC");
+if ($gudang_result && $gudang_result->num_rows > 0) {
+    while ($g = $gudang_result->fetch_assoc()) {
+        $gudang_options[] = $g;
+    }
+}
 
 $headerActions = '<a class="btn btn-outline-secondary" href="' . htmlspecialchars(bo_url_for('hpp/index.php')) . '"><i class="bi bi-arrow-left me-1"></i>Kembali</a>';
 bo_render_shell_start([
@@ -33,15 +43,39 @@ bo_render_shell_start([
     <form method="post" action="<?= htmlspecialchars(bo_url_for('hpp/process.php?action=update')) ?>" id="form_hpp">
         <input type="hidden" name="id" value="<?= $hpp['id'] ?>">
         <div class="row g-3 mb-4">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="bo-form-label">Kode HPP</label>
                 <input type="text" class="form-control" name="kode_hpp" value="<?= htmlspecialchars($hpp['kode_hpp']) ?>" readonly>
             </div>
-            <div class="col-md-5">
+            <div class="col-md-2">
+                <label class="bo-form-label">Gudang</label>
+                <select class="form-select" name="gudang_id" required>
+                    <?php foreach ($gudang_options as $g): ?>
+                        <?php
+                        $selected = '';
+                        if (isset($hpp['gudang_id']) && (int)$hpp['gudang_id'] === (int)$g['id']) {
+                            $selected = 'selected';
+                        }
+                        ?>
+                        <option value="<?= (int)$g['id'] ?>" <?= $selected ?>><?= htmlspecialchars($g['nama_gudang']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-4">
                 <label class="bo-form-label">Nama Menu</label>
                 <input type="text" class="form-control" name="nama_barang_hpp" value="<?= htmlspecialchars($hpp['nama_barang_hpp']) ?>" required>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-2">
+                <label class="bo-form-label">Status</label>
+                <select class="form-select" name="status">
+                    <?php
+                    $currentStatus = $hpp['status'] ?? 'active';
+                    ?>
+                    <option value="active" <?= $currentStatus === 'active' ? 'selected' : '' ?>>Aktif</option>
+                    <option value="inactive" <?= $currentStatus === 'inactive' ? 'selected' : '' ?>>Tidak Aktif</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <label class="bo-form-label">Harga Jual</label>
                 <input type="text" class="form-control" name="harga_jual" id="harga_jual" value="<?= number_format($hpp['harga_jual'], 0, ',', '.') ?>" required onkeyup="calculateTotals()">
             </div>
@@ -61,7 +95,7 @@ bo_render_shell_start([
                             while ($b = $barang_result->fetch_assoc()):
                                 $selected = $b['id'] == $row['barang_id'] ? 'selected' : '';
                             ?>
-                                <option value="<?= $b['id'] ?>" data-harga="<?= $b['harga_po'] > 0 ? $b['harga_po'] : $b['harga_beli'] ?>" data-satuan="pcs" <?= $selected ?>>
+                                <option value="<?= $b['id'] ?>" data-harga="<?= $b['harga_beli'] ?>" data-satuan="pcs" <?= $selected ?>>
                                     <?= htmlspecialchars($b['nama_barang']) ?>
                                 </option>
                             <?php endwhile; ?>
@@ -73,7 +107,7 @@ bo_render_shell_start([
                     </div>
                     <div class="col-md-2">
                         <label class="bo-form-label">Resep (Qty)</label>
-                        <input type="number" step="0.01" class="form-control qty" name="detail_bahan[<?= $index ?>][qty]" value="<?= $row['qty'] ?>" onkeyup="calculateItemTotal(this, <?= $index ?>)">
+                        <input type="text" inputmode="decimal" class="form-control qty" name="detail_bahan[<?= $index ?>][qty]" value="<?= rtrim(rtrim(number_format((float)$row['qty'], 2, ',', '.'), '0'), ',') ?>" oninput="calculateItemTotal(this, <?= $index ?>)">
                     </div>
                     <div class="col-md-1">
                         <label class="bo-form-label">Satuan</label>
@@ -152,7 +186,7 @@ while ($row = $barang_result->fetch_assoc()) {
     $barang_list[] = [
         'id' => $row['id'],
         'nama' => $row['nama_barang'],
-        'harga' => $row['harga_po'] > 0 ? $row['harga_po'] : $row['harga_beli'],
+        'harga' => $row['harga_beli'],
         'satuan' => 'pcs'
     ];
 }
@@ -182,7 +216,7 @@ function getBarangDetail(select, index) {
 function calculateItemTotal(input, index) {
     const container = input.closest('.bahan-baku-item');
     const harga = unformatNumber(container.querySelector('.harga-satuan').value);
-    const qty = parseFloat(input.value) || 0;
+    const qty = parseFloat(input.value.replace(',', '.')) || 0;
     const total = harga * qty;
     container.querySelector('.item-total').value = formatNumber(total.toFixed(0));
     calculateTotals();

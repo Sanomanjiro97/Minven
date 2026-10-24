@@ -416,6 +416,75 @@ if ($boMainConn) {
         return strcmp((string)($b['time'] ?? ''), (string)($a['time'] ?? ''));
     });
     $recentActivity = array_slice($recentActivity, 0, 6);
+
+    // Calculate omset, pengeluaran, sisa cash/saldo per bulan dan tahun
+    $bulan_ini = date('Y-m');
+    $tahun_ini = date('Y');
+
+    // Get monthly pendapatan
+    $query_pendapatan_bulan = $boMainConn->query("SELECT 
+        SUM(total_omset_hari) AS total_omset_bulan,
+        SUM(total_cash_sales) AS total_cash_bulan,
+        SUM(total_qr_gopay + total_edc + total_online_payment + total_transfers + total_shopeefood + total_gofood_gopay + total_ovo) AS total_saldo_bulan
+        FROM pendapatan_manual 
+        WHERE tanggal LIKE '$bulan_ini-%'");
+
+    // Get yearly pendapatan
+    $query_pendapatan_tahun = $boMainConn->query("SELECT 
+        SUM(total_omset_hari) AS total_omset_tahun,
+        SUM(total_cash_sales) AS total_cash_tahun,
+        SUM(total_qr_gopay + total_edc + total_online_payment + total_transfers + total_shopeefood + total_gofood_gopay + total_ovo) AS total_saldo_tahun
+        FROM pendapatan_manual 
+        WHERE tanggal LIKE '$tahun_ini-%'");
+
+    // Get monthly pengeluaran
+    $query_pengeluaran_bulan = $boMainConn->query("SELECT 
+        SUM(CASE WHEN payment_method = 'cash' THEN total_harga ELSE 0 END) AS total_pengeluaran_cash_bulan,
+        SUM(CASE WHEN payment_method = 'saldo' THEN total_harga ELSE 0 END) AS total_pengeluaran_saldo_bulan
+        FROM pengeluaran 
+        WHERE tanggal BETWEEN '$bulan_ini-01' AND '$bulan_ini-31'");
+
+    // Get yearly pengeluaran
+    $query_pengeluaran_tahun = $boMainConn->query("SELECT 
+        SUM(CASE WHEN payment_method = 'cash' THEN total_harga ELSE 0 END) AS total_pengeluaran_cash_tahun,
+        SUM(CASE WHEN payment_method = 'saldo' THEN total_harga ELSE 0 END) AS total_pengeluaran_saldo_tahun
+        FROM pengeluaran 
+        WHERE tanggal LIKE '$tahun_ini-%'");
+
+    $omset_bulan = 0; $cash_bulan = 0; $saldo_bulan = 0;
+    if ($query_pendapatan_bulan) {
+        $p_bulan = $query_pendapatan_bulan->fetch_assoc();
+        $omset_bulan = (float)($p_bulan['total_omset_bulan'] ?? 0);
+        $cash_bulan = (float)($p_bulan['total_cash_bulan'] ?? 0);
+        $saldo_bulan = (float)($p_bulan['total_saldo_bulan'] ?? 0);
+    }
+
+    $omset_tahun = 0; $cash_tahun = 0; $saldo_tahun = 0;
+    if ($query_pendapatan_tahun) {
+        $p_tahun = $query_pendapatan_tahun->fetch_assoc();
+        $omset_tahun = (float)($p_tahun['total_omset_tahun'] ?? 0);
+        $cash_tahun = (float)($p_tahun['total_cash_tahun'] ?? 0);
+        $saldo_tahun = (float)($p_tahun['total_saldo_tahun'] ?? 0);
+    }
+
+    $pengeluaran_cash_bulan = 0; $pengeluaran_saldo_bulan = 0;
+    if ($query_pengeluaran_bulan) {
+        $pg_bulan = $query_pengeluaran_bulan->fetch_assoc();
+        $pengeluaran_cash_bulan = (float)($pg_bulan['total_pengeluaran_cash_bulan'] ?? 0);
+        $pengeluaran_saldo_bulan = (float)($pg_bulan['total_pengeluaran_saldo_bulan'] ?? 0);
+    }
+
+    $pengeluaran_cash_tahun = 0; $pengeluaran_saldo_tahun = 0;
+    if ($query_pengeluaran_tahun) {
+        $pg_tahun = $query_pengeluaran_tahun->fetch_assoc();
+        $pengeluaran_cash_tahun = (float)($pg_tahun['total_pengeluaran_cash_tahun'] ?? 0);
+        $pengeluaran_saldo_tahun = (float)($pg_tahun['total_pengeluaran_saldo_tahun'] ?? 0);
+    }
+
+    $sisa_cash_bulan = $cash_bulan - $pengeluaran_cash_bulan;
+    $sisa_saldo_bulan = $saldo_bulan - $pengeluaran_saldo_bulan;
+    $sisa_cash_tahun = $cash_tahun - $pengeluaran_cash_tahun;
+    $sisa_saldo_tahun = $saldo_tahun - $pengeluaran_saldo_tahun;
 }
 
 if ($wantsJson && $jsonSection === 'top-items') {
@@ -591,6 +660,77 @@ $heroTransactions = $stats['po_total'] + $stats['direct_total'];
             </div>
             <div style="height: 300px;">
                 <canvas id="yearTrend"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4 align-items-stretch">
+    <div class="col-12">
+        <div class="bo-card p-4 w-100">
+            <div class="bo-card-header">
+                <div>
+                    <h3 class="bo-card-title">Ringkasan Keuangan</h3>
+                    <div class="bo-card-subtitle">Ringkasan pendapatan dan pengeluaran bulan dan tahun ini.</div>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="bo-card bo-stat p-3">
+                        <div class="bo-stat-label">OMSET BULAN INI</div>
+                        <div class="bo-stat-value">Rp <?= number_format($omset_bulan ?? 0, 0, ',', '.') ?></div>
+                        <div class="bo-stat-note">Total Pendapatan Bulanan</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="bo-card bo-stat p-3">
+                        <div class="bo-stat-label">OMSET TAHUN INI</div>
+                        <div class="bo-stat-value">Rp <?= number_format($omset_tahun ?? 0, 0, ',', '.') ?></div>
+                        <div class="bo-stat-note">Total Pendapatan Tahunan</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="bo-card bo-stat p-3">
+                        <div class="bo-stat-label">SISA CASH BULAN</div>
+                        <div class="bo-stat-value">Rp <?= number_format($sisa_cash_bulan ?? 0, 0, ',', '.') ?></div>
+                        <div class="bo-stat-note">Cash - Pengeluaran Cash</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="bo-card bo-stat p-3">
+                        <div class="bo-stat-label">SISA SALDO BULAN</div>
+                        <div class="bo-stat-value">Rp <?= number_format($sisa_saldo_bulan ?? 0, 0, ',', '.') ?></div>
+                        <div class="bo-stat-note">Saldo - Pengeluaran Saldo</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="bo-card bo-stat p-3">
+                        <div class="bo-stat-label">SISA CASH TAHUNAN</div>
+                        <div class="bo-stat-value">Rp <?= number_format($sisa_cash_tahun ?? 0, 0, ',', '.') ?></div>
+                        <div class="bo-stat-note">Cash Tahunan - Pengeluaran Cash Tahunan</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="bo-card bo-stat p-3">
+                        <div class="bo-stat-label">SISA SALDO TAHUNAN</div>
+                        <div class="bo-stat-value">Rp <?= number_format($sisa_saldo_tahun ?? 0, 0, ',', '.') ?></div>
+                        <div class="bo-stat-note">Saldo Tahunan - Pengeluaran Saldo Tahunan</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="bo-card bo-stat p-3">
+                        <div class="bo-stat-label">PENGELUARAN CASH</div>
+                        <div class="bo-stat-value">Rp <?= number_format($pengeluaran_cash_bulan ?? 0, 0, ',', '.') ?></div>
+                        <div class="bo-stat-note">Bulan Ini</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="bo-card bo-stat p-3">
+                        <div class="bo-stat-label">PENGELUARAN SALDO</div>
+                        <div class="bo-stat-value">Rp <?= number_format($pengeluaran_saldo_bulan ?? 0, 0, ',', '.') ?></div>
+                        <div class="bo-stat-note">Bulan Ini</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

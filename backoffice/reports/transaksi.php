@@ -204,7 +204,8 @@ if (isset($_GET['edit_id'])) {
     if ($stmt) {
         $stmt->bind_param('i', $id_target);
         $stmt->execute();
-        $edit_data = $stmt->get_result()->fetch_assoc();
+        $tmp_edit = $stmt->get_result();
+        $edit_data = ($tmp_edit && $tmp_edit instanceof mysqli_result) ? $tmp_edit->fetch_assoc() : null;
         $stmt->close();
     }
 }

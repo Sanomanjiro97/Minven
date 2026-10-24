@@ -294,17 +294,19 @@ $sql = "SELECT pt.*, b.kode_barang, b.nama_barang, COALESCE(sa.nama_satuan, s.na
         LEFT JOIN supplier sup ON pt.supplier_id = sup.id
         ORDER BY sup.nama_supplier, pt.nama_template, b.kode_barang";
 $result = $conn->query($sql);
-while ($row = $result->fetch_assoc()) {
-    $key = $row['supplier_id'] . '|' . $row['nama_template'];
-    if (!isset($templates_by_supplier[$key])) {
-        $templates_by_supplier[$key] = [
-            'supplier_id' => $row['supplier_id'],
-            'nama_supplier' => $row['nama_supplier'],
-            'nama_template' => $row['nama_template'],
-            'items' => []
-        ];
+if ($result && $result instanceof mysqli_result) {
+    while ($row = $result->fetch_assoc()) {
+        $key = $row['supplier_id'] . '|' . $row['nama_template'];
+        if (!isset($templates_by_supplier[$key])) {
+            $templates_by_supplier[$key] = [
+                'supplier_id' => $row['supplier_id'],
+                'nama_supplier' => $row['nama_supplier'],
+                'nama_template' => $row['nama_template'],
+                'items' => []
+            ];
+        }
+        $templates_by_supplier[$key]['items'][] = $row;
     }
-    $templates_by_supplier[$key]['items'][] = $row;
 }
 
 ?>

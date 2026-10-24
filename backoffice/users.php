@@ -31,9 +31,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $boAuthConn->prepare("SELECT nama_role FROM roles WHERE id = ?");
             if ($stmt) {
                 $stmt->bind_param('i', $roleId);
-                $stmt->execute();
-                $row = $stmt->get_result()->fetch_assoc();
-                $roleName = (string)($row['nama_role'] ?? '');
+                if ($stmt->execute()) {
+                    $res = $stmt->get_result();
+                    $row = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+                    $roleName = (string)($row['nama_role'] ?? '');
+                }
                 $stmt->close();
             }
 
@@ -92,9 +94,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $boAuthConn->prepare("SELECT nama_role FROM roles WHERE id = ?");
             if ($stmt) {
                 $stmt->bind_param('i', $roleId);
-                $stmt->execute();
-                $row = $stmt->get_result()->fetch_assoc();
-                $roleName = (string)($row['nama_role'] ?? '');
+                if ($stmt->execute()) {
+                    $res = $stmt->get_result();
+                    $row = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+                    $roleName = (string)($row['nama_role'] ?? '');
+                }
                 $stmt->close();
             }
 
@@ -180,8 +184,10 @@ if ($action === 'edit' && isset($_GET['id'])) {
         $stmt = $boAuthConn->prepare("SELECT u.*, (SELECT role_id FROM user_roles WHERE user_id = u.id ORDER BY id ASC LIMIT 1) AS primary_role_id FROM users u WHERE u.id = ?");
         if ($stmt) {
             $stmt->bind_param('i', $userId);
-            $stmt->execute();
-            $editUser = $stmt->get_result()->fetch_assoc();
+            if ($stmt->execute()) {
+                $res = $stmt->get_result();
+                $editUser = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+            }
             $stmt->close();
         }
     }

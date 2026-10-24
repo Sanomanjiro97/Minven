@@ -49,7 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit();
 }
 
-$config = $conn->query("SELECT * FROM setup_whatsapp WHERE id = 1")->fetch_assoc();
+$res = $conn->query("SELECT * FROM setup_whatsapp WHERE id = 1");
+$config = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
 ?>
 <!DOCTYPE html>
 <html lang="id">

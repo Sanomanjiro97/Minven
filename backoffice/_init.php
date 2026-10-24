@@ -29,8 +29,12 @@ if (!function_exists('bo_ensure_backoffice_seed')) {
         if (!$stmt) return;
         $username = 'sano';
         $stmt->bind_param('s', $username);
-        $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return;
+        }
+        $res = $stmt->get_result();
+        $row = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
         $stmt->close();
 
         $hash = password_hash('minven25', PASSWORD_DEFAULT);
@@ -290,6 +294,74 @@ if (!function_exists('bo_ensure_pendapatan_manual_table')) {
     }
 }
 
+if (!function_exists('bo_upsert_pendapatan_manual')) {
+    function bo_upsert_pendapatan_manual($tanggal, $totalOmsetHari, $totalDineIn, $totalTakeAway, $totalOnlineOrder, $totalCashSales, $totalTransfers, $totalQrGopay, $totalEdc, $totalOnlinePayment = 0) {
+        bo_ensure_pendapatan_manual_table();
+        $conn = $GLOBALS['boMainConn'] ?? ($GLOBALS['conn'] ?? null);
+        if (!$conn instanceof mysqli || $conn->connect_error) {
+            return ['success' => false, 'message' => 'Koneksi database backoffice tidak tersedia.'];
+        }
+
+        $stmtCheck = $conn->prepare("SELECT id FROM pendapatan_manual WHERE tanggal = ? LIMIT 1");
+        if (!$stmtCheck) {
+            return ['success' => false, 'message' => 'Gagal menyiapkan query cek pendapatan manual.'];
+        }
+        $stmtCheck->bind_param('s', $tanggal);
+        $stmtCheck->execute();
+        $resCheck = $stmtCheck->get_result();
+        $existingRow = $resCheck ? $resCheck->fetch_assoc() : null;
+        $stmtCheck->close();
+
+        if ($existingRow) {
+            $stmtUpdate = $conn->prepare("UPDATE pendapatan_manual SET 
+                total_omset_hari = ?,
+                total_dine_in = ?,
+                total_take_away = ?,
+                total_online_order = ?,
+                total_cash_sales = ?,
+                total_transfers = ?,
+                total_qr_gopay = ?,
+                total_edc = ?,
+                total_online_payment = ?,
+                updated_at = NOW()
+                WHERE tanggal = ?");
+            if (!$stmtUpdate) {
+                return ['success' => false, 'message' => 'Gagal menyiapkan query update pendapatan manual.'];
+            }
+            $stmtUpdate->bind_param('ddddddddss', $totalOmsetHari, $totalDineIn, $totalTakeAway, $totalOnlineOrder, $totalCashSales, $totalTransfers, $totalQrGopay, $totalEdc, $totalOnlinePayment, $tanggal);
+            $ok = $stmtUpdate->execute();
+            $stmtUpdate->close();
+            if (!$ok) {
+                return ['success' => false, 'message' => 'Gagal memperbarui pendapatan manual.'];
+            }
+            return ['success' => true, 'message' => 'Pendapatan manual berhasil diperbarui.'];
+        } else {
+            $stmtInsert = $conn->prepare("INSERT INTO pendapatan_manual (
+                tanggal,
+                total_omset_hari,
+                total_dine_in,
+                total_take_away,
+                total_online_order,
+                total_cash_sales,
+                total_transfers,
+                total_qr_gopay,
+                total_edc,
+                total_online_payment
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            if (!$stmtInsert) {
+                return ['success' => false, 'message' => 'Gagal menyiapkan query insert pendapatan manual.'];
+            }
+            $stmtInsert->bind_param('ddddddddss', $tanggal, $totalOmsetHari, $totalDineIn, $totalTakeAway, $totalOnlineOrder, $totalCashSales, $totalTransfers, $totalQrGopay, $totalEdc, $totalOnlinePayment);
+            $ok = $stmtInsert->execute();
+            $stmtInsert->close();
+            if (!$ok) {
+                return ['success' => false, 'message' => 'Gagal menyimpan pendapatan manual.'];
+            }
+            return ['success' => true, 'message' => 'Pendapatan manual berhasil disimpan.'];
+        }
+    }
+}
+
 if (!function_exists('bo_nav_items')) {
     function bo_nav_items() {
         return [
@@ -300,6 +372,22 @@ if (!function_exists('bo_nav_items')) {
                     'caption' => 'Ringkasan backoffice',
                     'icon' => 'bi bi-grid-1x2-fill',
                     'href' => bo_url_for('dashboard.php'),
+                ],
+            ],
+            'pos' => [
+                [
+                    'key' => 'product-catalog',
+                    'label' => 'HPP & Katalog Produk',
+                    'caption' => 'Master HPP, resep & harga jual POS',
+                    'icon' => 'bi bi-box2-heart',
+                    'href' => bo_url_for('hpp/index.php'),
+                ],
+                [
+                    'key' => 'reports-pos',
+                    'label' => 'POS Kasir',
+                    'caption' => 'Transaksi aplikasi kasir',
+                    'icon' => 'bi bi-receipt-cutoff',
+                    'href' => bo_url_for('reports/pos.php'),
                 ],
             ],
             'reports' => [
@@ -329,7 +417,7 @@ if (!function_exists('bo_nav_items')) {
                     'label' => 'Transaksi',
                     'caption' => 'Kelola Omset & Pengeluaran',
                     'icon' => 'bi bi-wallet2',
-                    'href' => bo_url_for('reports/transaksi.php'), // <-- Berhasil diarahkan ke folder reports
+                    'href' => bo_url_for('reports/transaksi.php'),
                 ],
                 [
                     'key' => 'reports-inventory',
@@ -352,13 +440,13 @@ if (!function_exists('bo_nav_items')) {
                     'icon' => 'bi bi-graph-up-arrow',
                     'href' => bo_url_for('reports/item_movement.php'),
                 ],
-                 [
-            'key' => 'hpp',
-            'label' => 'Data Base HPP',
-            'caption' => 'Kelola harga pokok',
-            'icon' => 'bi bi-calculator',
-            'href' => bo_url_for('hpp/index.php'),
-        ],
+                //  [
+        //     'key' => 'hpp',
+        //     'label' => 'Data Base HPP',
+        //     'caption' => 'Kelola harga pokok',
+        //     'icon' => 'bi bi-calculator',
+        //     'href' => bo_url_for('hpp/index.php'),
+        // ],
             ],
             'management' => [
         [
@@ -582,6 +670,7 @@ if (!function_exists('bo_render_shell_start')) {
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
             <link rel="stylesheet" href="<?= htmlspecialchars(url_for('asset/css/backoffice-material.css')) ?>">
+            <link rel="stylesheet" href="<?= htmlspecialchars(url_for('asset/css/backoffice-mobile.css')) ?>">
             <link rel="icon" type="image/png" href="<?= htmlspecialchars(url_for('asset/LOGO1.png')) ?>">
             <?= $extraHead ?>
         </head>

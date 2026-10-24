@@ -1,4 +1,7 @@
 <?php
+// Disable auto-fix menu access BEFORE loading config
+$GLOBALS['DISABLE_MENU_ACCESS_AUTO_FIX'] = true;
+
 require_once __DIR__ . '/_init.php';
 bo_require_login();
 
@@ -8,11 +11,16 @@ if ($roleId <= 0) {
     exit();
 }
 
+$role = null;
 $stmt = $boAuthConn->prepare("SELECT * FROM roles WHERE id = ?");
-$stmt->bind_param('i', $roleId);
-$stmt->execute();
-$role = $stmt->get_result()->fetch_assoc();
-$stmt->close();
+if ($stmt) {
+    $stmt->bind_param('i', $roleId);
+    if ($stmt->execute()) {
+        $res = $stmt->get_result();
+        $role = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+    }
+    $stmt->close();
+}
 
 if (!$role) {
     header('Location: ' . bo_url_for('roles.php'));
@@ -130,13 +138,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $existing = [];
 $stmt = $boAuthConn->prepare("SELECT * FROM menu_access WHERE role_id = ?");
-$stmt->bind_param('i', $roleId);
-$stmt->execute();
-$res = $stmt->get_result();
-while ($res && ($r = $res->fetch_assoc())) {
-    $existing[$r['menu_name']] = $r;
+if ($stmt) {
+    $stmt->bind_param('i', $roleId);
+    if ($stmt->execute()) {
+        $res = $stmt->get_result();
+        if ($res && $res instanceof mysqli_result) {
+            while ($r = $res->fetch_assoc()) {
+                $existing[$r['menu_name']] = $r;
+            }
+        }
+    }
+    $stmt->close();
 }
-$stmt->close();
 
 $success = (isset($_GET['success']) && $_GET['success'] === '1') ? 'Hak akses berhasil disimpan.' : null;
 ?>

@@ -475,11 +475,21 @@ $result = $conn->query($query);
 // Get filter descriptions for header
 $filter_desc = "";
 if (!empty($gudang_id)) {
-    $gudang_name = $conn->query("SELECT nama_gudang FROM gudang WHERE id = $gudang_id")->fetch_assoc()['nama_gudang'];
+    $res_gudang = $conn->query("SELECT nama_gudang FROM gudang WHERE id = $gudang_id");
+    $gudang_name = '';
+    if ($res_gudang && $res_gudang instanceof mysqli_result) {
+        $row_gudang = $res_gudang->fetch_assoc();
+        $gudang_name = $row_gudang['nama_gudang'] ?? '';
+    }
     $filter_desc .= "Gudang: $gudang_name, ";
 }
 if (!empty($kategori_id)) {
-    $kategori_name = $conn->query("SELECT nama_kategori FROM kategori WHERE id = $kategori_id")->fetch_assoc()['nama_kategori'];
+    $res_kategori = $conn->query("SELECT nama_kategori FROM kategori WHERE id = $kategori_id");
+    $kategori_name = '';
+    if ($res_kategori && $res_kategori instanceof mysqli_result) {
+        $row_kategori = $res_kategori->fetch_assoc();
+        $kategori_name = $row_kategori['nama_kategori'] ?? '';
+    }
     $filter_desc .= "Kategori: $kategori_name, ";
 }
 if (!empty($stok_minimum)) {

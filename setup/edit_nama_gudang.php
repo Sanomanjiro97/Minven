@@ -34,11 +34,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_nama_gudang'])
     } else {
         $stmt = $conn->prepare("SELECT nama_gudang FROM gudang WHERE id = ?");
         $stmt->bind_param('i', $gudang_id);
-        $stmt->execute();
-        $current = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
+        if (!$stmt->execute()) {
+            $stmt->close();
+            $error = 'Gagal mengambil data gudang.';
+        } else {
+            $res = $stmt->get_result();
+            $current = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+            $stmt->close();
+        }
 
-        if (!$current) {
+        if (!isset($current) || !$current) {
             $error = 'Gudang tidak ditemukan.';
         } elseif (trim((string)$current['nama_gudang']) === $nama_baru) {
             $success = 'Nama gudang tidak berubah.';

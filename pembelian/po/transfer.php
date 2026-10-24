@@ -86,11 +86,14 @@ if (!$stmt) {
 }
 $stmt->bind_param('i', $po_id);
 if (!$stmt->execute()) {
+    $stmt->close();
     $_SESSION['error'] = "Error executing statement: " . $stmt->error;
     header("Location: index.php");
     exit();
 }
-$po = $stmt->get_result()->fetch_assoc();
+$res = $stmt->get_result();
+$po = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+$stmt->close();
 
 if (!$po) {
     $_SESSION['error'] = "Data PO tidak ditemukan";
@@ -313,11 +316,14 @@ if (!$stmt) {
 }
 $stmt->bind_param('i', $po_id);
 if (!$stmt->execute()) {
+    $stmt->close();
     $_SESSION['error'] = "Error executing statement: " . $stmt->error;
     header("Location: index.php");
     exit();
 }
-$po = $stmt->get_result()->fetch_assoc();
+$res = $stmt->get_result();
+$po = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+$stmt->close();
 
 if (!$po) {
     $_SESSION['error'] = "Data PO tidak ditemukan";

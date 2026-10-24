@@ -16,17 +16,6 @@ if (!checkAccess('barang', 'view')) {
     exit();
 }
 
-// Ambil role user dari session atau query user_roles
-$user_id = $_SESSION['user_id'];
-$role_ids = [];
-$res = $conn->query("SELECT role_id FROM user_roles WHERE user_id = $user_id");
-while ($row = $res->fetch_assoc()) $role_ids[] = $row['role_id'];
-if (!check_menu_access($conn, $role_ids, 'barang')) {
-    $_SESSION['error'] = 'Anda tidak memiliki akses ke menu ini!';
-    header('Location: ../user/roles.php?noaccess=1');
-    exit();
-}
-
 $filter_session_key = 'filter_barang_index';
 if (isset($_GET['reset']) && (string)$_GET['reset'] === '1') {
     unset($_SESSION[$filter_session_key]);
@@ -298,6 +287,130 @@ if ($res_all instanceof mysqli_result) {
             text-transform: uppercase !important;
             font-size: 0.75rem !important;
             letter-spacing: 0.05em !important;
+        }
+
+        /* Column width definitions for neat layout */
+        #barangTable th:nth-child(1), /* No */
+        #barangTable td:nth-child(1) {
+            width: 50px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        #barangTable th:nth-child(2), /* Kode Barang */
+        #barangTable td:nth-child(2) {
+            width: 100px;
+            min-width: 100px;
+            white-space: nowrap;
+        }
+
+        #barangTable th:nth-child(3), /* Barcode (Item) */
+        #barangTable td:nth-child(3) {
+            width: 120px;
+            min-width: 120px;
+            white-space: nowrap;
+        }
+
+        #barangTable th:nth-child(4), /* Barcode (Konversi) */
+        #barangTable td:nth-child(4) {
+            width: 120px;
+            min-width: 120px;
+            white-space: nowrap;
+        }
+
+        #barangTable th:nth-child(5), /* Nama Barang */
+        #barangTable td:nth-child(5) {
+            width: 200px;
+            min-width: 180px;
+            max-width: 250px;
+        }
+
+        #barangTable th:nth-child(6), /* Supplier */
+        #barangTable td:nth-child(6) {
+            width: 150px;
+            min-width: 130px;
+            max-width: 180px;
+        }
+
+        #barangTable th:nth-child(7), /* Kategori */
+        #barangTable td:nth-child(7) {
+            width: 120px;
+            min-width: 100px;
+            max-width: 150px;
+        }
+
+        #barangTable th:nth-child(8), /* Satuan */
+        #barangTable td:nth-child(8) {
+            width: 80px;
+            min-width: 70px;
+            white-space: nowrap;
+        }
+
+        #barangTable th:nth-child(9), /* Jenis */
+        #barangTable td:nth-child(9) {
+            width: 90px;
+            min-width: 80px;
+            white-space: nowrap;
+        }
+
+        #barangTable th:nth-child(10), /* Par Stock */
+        #barangTable td:nth-child(10) {
+            width: 80px;
+            min-width: 70px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        #barangTable th:nth-child(11), /* Harga PO */
+        #barangTable td:nth-child(11) {
+            width: 100px;
+            min-width: 90px;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        #barangTable th:nth-child(12), /* Harga Satuan Beli */
+        #barangTable td:nth-child(12) {
+            width: 110px;
+            min-width: 100px;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        #barangTable th:nth-child(13), /* Dibuat Oleh */
+        #barangTable td:nth-child(13) {
+            width: 120px;
+            min-width: 100px;
+            max-width: 150px;
+        }
+
+        #barangTable th:nth-child(14), /* Tanggal Dibuat */
+        #barangTable td:nth-child(14) {
+            width: 100px;
+            min-width: 90px;
+            white-space: nowrap;
+        }
+
+        #barangTable th:nth-child(15), /* Tanggal Kadaluarsa */
+        #barangTable td:nth-child(15) {
+            width: 100px;
+            min-width: 90px;
+            white-space: nowrap;
+        }
+
+        #barangTable th:nth-child(16), /* Foto */
+        #barangTable td:nth-child(16) {
+            width: 100px;
+            min-width: 90px;
+            text-align: center;
+        }
+
+        #barangTable th:nth-child(17), /* Aksi */
+        #barangTable td:nth-child(17) {
+            width: 140px;
+            min-width: 120px;
+            text-align: center;
+            white-space: nowrap;
         }
 
         /* DataTables header styling override */

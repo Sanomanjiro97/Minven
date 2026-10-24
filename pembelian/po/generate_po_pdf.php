@@ -24,8 +24,15 @@ $sql = "SELECT po.*, s.nama_supplier, s.alamat as alamat_supplier, s.telepon as 
         WHERE po.id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param('i', $po_id);
-$stmt->execute();
-$po = $stmt->get_result()->fetch_assoc();
+if (!$stmt->execute()) {
+    $stmt->close();
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Error executing query: ' . $stmt->error]);
+    exit();
+}
+$res = $stmt->get_result();
+$po = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+$stmt->close();
 
 if (!$po) {
     header('Content-Type: application/json');

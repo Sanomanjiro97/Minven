@@ -1,0 +1,410 @@
+/**
+ * Backoffice Mobile Responsive CSS
+ * Tampilan mobile yang dioptimalkan untuk backoffice MINVEN PRO
+ */
+
+/* Mobile Navbar & Sidebar */
+@media (max-width: 991.98px) {
+    .bo-sidebar-mobile {
+        width: 280px !important;
+        max-width: 85vw;
+    }
+
+    .bo-topbar {
+        padding: 16px;
+    }
+
+    .bo-topbar h1 {
+        font-size: 1.5rem;
+    }
+
+    .bo-topbar-actions {
+        gap: 8px;
+    }
+
+    .bo-icon-button {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Card improvements */
+    .bo-card {
+        margin-bottom: 16px;
+        border-radius: 16px;
+    }
+
+    .bo-card p-4 {
+        padding: 16px !important;
+    }
+
+    .bo-card-header {
+        padding: 16px;
+    }
+
+    .bo-card-title {
+        font-size: 1.1rem;
+    }
+
+    .bo-card-subtitle {
+        font-size: 0.85rem;
+    }
+
+    /* Form improvements */
+    .bo-form-label {
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+    }
+
+    .form-control, .form-select {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 12px 16px;
+        border-radius: 12px;
+    }
+
+    /* Button improvements */
+    .btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+        border-radius: 10px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .btn-sm {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        min-height: 36px;
+    }
+
+    /* Table improvements - Horizontal scroll */
+    .table-responsive {
+        border-radius: 12px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table {
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .table thead th {
+        padding: 12px 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .table tbody td {
+        padding: 12px 10px;
+    }
+
+    /* Hide less important columns on mobile */
+    .table td:nth-child(n+6),
+    .table th:nth-child(n+6) {
+        display: none;
+    }
+
+    /* Show important columns */
+    .table td:first-child,
+    .table th:first-child,
+    .table td:nth-child(2),
+    .table th:nth-child(2),
+    .table td:nth-child(3),
+    .table th:nth-child(3) {
+        display: table-cell;
+    }
+
+    /* Card layout for table data on very small screens */
+    @media (max-width: 576px) {
+        .table {
+            display: block;
+        }
+
+        .table thead {
+            display: none;
+        }
+
+        .table tbody,
+        .table tr,
+        .table td {
+            display: block;
+            width: 100%;
+        }
+
+        .table tr {
+            margin-bottom: 16px;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 12px;
+            background: #fff;
+        }
+
+        .table td {
+            text-align: left !important;
+            padding: 8px 0;
+            border: none;
+            position: relative;
+            padding-left: 50%;
+        }
+
+        .table td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 0;
+            width: 45%;
+            padding-right: 10px;
+            white-space: nowrap;
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .table td:nth-child(n+6) {
+            display: block;
+        }
+    }
+
+    /* Filter form improvements */
+    .bo-card .row.g-3 {
+        gap: 12px;
+    }
+
+    .bo-card .col-md-3,
+    .bo-card .col-md-4,
+    .bo-card .col-md-6 {
+        width: 100%;
+        margin-bottom: 12px;
+    }
+
+    /* Action buttons in table */
+    .d-flex.gap-1 {
+        flex-wrap: wrap;
+        gap: 6px !important;
+    }
+
+    .btn-sm {
+        flex: 1;
+        min-width: 36px;
+    }
+
+    /* Pagination */
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    .page-link {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
+    /* Modal improvements */
+    .modal-content {
+        border-radius: 20px;
+        margin: 12px;
+    }
+
+    .modal-header {
+        padding: 16px 20px;
+        border-radius: 20px 20px 0 0;
+    }
+
+    .modal-body {
+        padding: 20px;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+
+    .modal-footer {
+        padding: 16px 20px;
+        border-radius: 0 0 20px 20px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .modal-footer .btn {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    /* Alert improvements */
+    .alert {
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 16px;
+        font-size: 0.9rem;
+    }
+
+    /* Badge improvements */
+    .badge {
+        font-size: 0.75rem;
+        padding: 6px 10px;
+        border-radius: 8px;
+    }
+
+    /* Input group improvements */
+    .input-group {
+        flex-wrap: nowrap;
+    }
+
+    .input-group-text {
+        padding: 12px 16px;
+        font-size: 16px;
+    }
+
+    /* Stats cards */
+    .bo-card.p-4.bg-light {
+        padding: 16px !important;
+    }
+
+    .bo-card .h4 {
+        font-size: 1.25rem;
+    }
+
+    .bo-card .h6 {
+        font-size: 0.9rem;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        font-size: 0.85rem;
+        padding: 8px 0;
+    }
+
+    /* Tabs */
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .nav-tabs .nav-link {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    /* Dropdown menu */
+    .dropdown-menu {
+        width: 200px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .dropdown-item {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+
+    /* Offcanvas */
+    .offcanvas {
+        border-radius: 20px 0 0 20px;
+    }
+
+    .offcanvas-header {
+        padding: 20px;
+    }
+
+    .offcanvas-body {
+        padding: 0 20px 20px 20px;
+    }
+
+    /* Search box */
+    .form-control:focus {
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+    }
+
+    /* Table action buttons */
+    .table .btn-group {
+        flex-wrap: wrap;
+    }
+
+    .table .btn-sm {
+        margin-bottom: 4px;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 576px) {
+    .bo-topbar h1 {
+        font-size: 1.25rem;
+    }
+
+    .bo-card-title {
+        font-size: 1rem;
+    }
+
+    .bo-card-subtitle {
+        font-size: 0.8rem;
+    }
+
+    .form-control, .form-select {
+        padding: 10px 14px;
+    }
+
+    .btn {
+        padding: 8px 14px;
+        font-size: 0.85rem;
+    }
+
+    .table {
+        font-size: 0.8rem;
+    }
+
+    .table thead th,
+    .table tbody td {
+        padding: 10px 8px;
+    }
+
+    /* Stack action buttons vertically on very small screens */
+    .d-flex.gap-1 {
+        flex-direction: column;
+    }
+
+    .d-flex.gap-1 .btn {
+        width: 100%;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (max-width: 991.98px) {
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    button, a, .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .btn:active {
+        transform: scale(0.98);
+    }
+
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Hide scrollbar but keep functionality */
+    ::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+    }
+}
+
+/* Print styles - Hide mobile elements when printing */
+@media print {
+    .bo-sidebar-mobile,
+    .d-lg-none {
+        display: none !important;
+    }
+}

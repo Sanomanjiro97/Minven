@@ -1,24 +1,44 @@
 <?php
+/**
+ * Global Configuration & Database Handler
+ * File terpadu untuk koneksi database, helper utility, dan tugas background (Auto-Reset Stok & Menu Integrity).
+ */
+
+// -----------------------------------------------------------------------------
+// 1. KONFIGURASI DATABASE & ENVIRONMENT
+// -----------------------------------------------------------------------------
+// Auto-fix must never re-grant menus that an admin turned off.
+// Missing menu_access row = no access. Do not insert defaults on login/page load.
+if (!defined('DISABLE_MENU_ACCESS_AUTO_FIX')) {
+    define('DISABLE_MENU_ACCESS_AUTO_FIX', true);
+}
+
 define('DB_HOST', getenv('MINVEN_DB_HOST') !== false ? getenv('MINVEN_DB_HOST') : 'localhost');
 define('DB_USER', getenv('MINVEN_DB_USER') !== false ? getenv('MINVEN_DB_USER') : 'root');
 define('DB_PASS', getenv('MINVEN_DB_PASS') !== false ? getenv('MINVEN_DB_PASS') : '');
+define('DB_PORT', 3306);
 define('DB_NAME', getenv('MINVEN_DB_NAME') !== false ? getenv('MINVEN_DB_NAME') : 'minven_pro');
 define('AUTH_DB_NAME', getenv('MINVEN_AUTH_DB_NAME') !== false ? getenv('MINVEN_AUTH_DB_NAME') : 'minven_backoffice');
+define('POS_DB_NAME', getenv('MINVEN_POS_DB_NAME') !== false ? getenv('MINVEN_POS_DB_NAME') : 'minven_pos');
 
 // Konfigurasi Email (SMTP)
-define('SMTP_HOST', getenv('MINVEN_SMTP_HOST') !== false ? getenv('MINVEN_SMTP_HOST') : 'smtp.gmail.com'); // Host SMTP, contoh: smtp.gmail.com
-define('SMTP_USER', getenv('MINVEN_SMTP_USER') !== false ? getenv('MINVEN_SMTP_USER') : 'akagamisans2@gmail.com'); // Email pengirim
-define('SMTP_PASS', getenv('MINVEN_SMTP_PASS') !== false ? getenv('MINVEN_SMTP_PASS') : 'your_app_password'); // Password aplikasi (bukan password email biasa)
-define('SMTP_PORT', getenv('MINVEN_SMTP_PORT') !== false ? (int)getenv('MINVEN_SMTP_PORT') : 587); // Port SMTP (587 untuk TLS, 465 untuk SSL)
-define('SMTP_SECURE', getenv('MINVEN_SMTP_SECURE') !== false ? getenv('MINVEN_SMTP_SECURE') : 'tls'); // Enkripsi (tls atau ssl)
-define('FROM_EMAIL', getenv('MINVEN_FROM_EMAIL') !== false ? getenv('MINVEN_FROM_EMAIL') : 'akagamisans2@gmail.com'); // Email yang muncul di "From"
-define('FROM_NAME', getenv('MINVEN_FROM_NAME') !== false ? getenv('MINVEN_FROM_NAME') : 'MINVEN Admin'); // Nama yang muncul di "From"
+define('SMTP_HOST', getenv('MINVEN_SMTP_HOST') !== false ? getenv('MINVEN_SMTP_HOST') : 'smtp.gmail.com');
+define('SMTP_USER', getenv('MINVEN_SMTP_USER') !== false ? getenv('MINVEN_SMTP_USER') : 'akagamisans2@gmail.com');
+define('SMTP_PASS', getenv('MINVEN_SMTP_PASS') !== false ? getenv('MINVEN_SMTP_PASS') : 'your_app_password');
+define('SMTP_PORT', getenv('MINVEN_SMTP_PORT') !== false ? (int)getenv('MINVEN_SMTP_PORT') : 587);
+define('SMTP_SECURE', getenv('MINVEN_SMTP_SECURE') !== false ? getenv('MINVEN_SMTP_SECURE') : 'tls');
+define('FROM_EMAIL', getenv('MINVEN_FROM_EMAIL') !== false ? getenv('MINVEN_FROM_EMAIL') : 'akagamisans2@gmail.com');
+define('FROM_NAME', getenv('MINVEN_FROM_NAME') !== false ? getenv('MINVEN_FROM_NAME') : 'MINVEN Admin');
 
-// Konfigurasi WhatsApp API (contoh untuk development)
-define('WA_API_URL', getenv('MINVEN_WA_API_URL') !== false ? getenv('MINVEN_WA_API_URL') : 'http://localhost:3000/send-message'); // URL WhatsApp API endpoint
-define('WA_API_KEY', getenv('MINVEN_WA_API_KEY') !== false ? getenv('MINVEN_WA_API_KEY') : 'your_api_key_here'); // API key jika diperlukan
+// Konfigurasi WhatsApp API
+define('WA_API_URL', getenv('MINVEN_WA_API_URL') !== false ? getenv('MINVEN_WA_API_URL') : 'http://localhost:3000/send-message');
+define('WA_API_KEY', getenv('MINVEN_WA_API_KEY') !== false ? getenv('MINVEN_WA_API_KEY') : 'your_api_key_here');
 
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+// -----------------------------------------------------------------------------
+// 2. INISIALISASI KONEKSI DATABASE (Main, Auth, POS)
+// -----------------------------------------------------------------------------
+$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
 
 if ($conn->connect_error) {
     die("Koneksi gagal: " . $conn->connect_error);
@@ -27,13 +47,27 @@ if ($conn->connect_error) {
 if (!isset($authConn)) {
     $authConn = null;
     if (defined('AUTH_DB_NAME') && AUTH_DB_NAME) {
-        $tmp = @new mysqli(DB_HOST, DB_USER, DB_PASS, AUTH_DB_NAME);
+        $tmp = @new mysqli(DB_HOST, DB_USER, DB_PASS, AUTH_DB_NAME, DB_PORT);
         if ($tmp && !$tmp->connect_error) {
             $authConn = $tmp;
         }
     }
 }
 
+if (!isset($posConn)) {
+    $posConn = null;
+    if (defined('POS_DB_NAME') && POS_DB_NAME) {
+        $tmp = @new mysqli(DB_HOST, DB_USER, DB_PASS, POS_DB_NAME, DB_PORT);
+        if ($tmp && !$tmp->connect_error) {
+            $posConn = $tmp;
+        }
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// 3. GETTER HELPER KONEKSI DATABASE
+// -----------------------------------------------------------------------------
 if (!function_exists('main_db_conn')) {
     function main_db_conn() {
         return $GLOBALS['conn'] ?? null;
@@ -49,6 +83,41 @@ if (!function_exists('auth_db_conn')) {
     }
 }
 
+if (!function_exists('resolve_user_db_conn')) {
+    function resolve_user_db_conn() {
+        $mainConn = $GLOBALS['conn'] ?? null;
+        if ($mainConn instanceof mysqli && !$mainConn->connect_error) {
+            $check = $mainConn->query("SHOW TABLES LIKE 'users'");
+            if ($check && $check->num_rows > 0) {
+                return $mainConn;
+            }
+        }
+
+        $authConn = auth_db_conn();
+        if ($authConn instanceof mysqli && !$authConn->connect_error) {
+            $check = $authConn->query("SHOW TABLES LIKE 'users'");
+            if ($check && $check->num_rows > 0) {
+                return $authConn;
+            }
+        }
+
+        return $mainConn ?? $authConn ?? null;
+    }
+}
+
+if (!function_exists('pos_db_conn')) {
+    function pos_db_conn() {
+        if (isset($GLOBALS['posConn']) && $GLOBALS['posConn'] instanceof mysqli && !$GLOBALS['posConn']->connect_error) {
+            return $GLOBALS['posConn'];
+        }
+        return null;
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// 4. PATH & URL HELPER
+// -----------------------------------------------------------------------------
 if (!defined('BASE_PATH')) {
     $envBase = getenv('MINVEN_BASE_PATH');
     if ($envBase !== false && $envBase !== '') {
@@ -92,6 +161,10 @@ if (!function_exists('url_for')) {
     }
 }
 
+
+// -----------------------------------------------------------------------------
+// 5. DATABASE SCHEMA HELPERS (CHECK & MANIPULATION)
+// -----------------------------------------------------------------------------
 function db_has_column($conn, $table, $column) {
     static $cache = [];
     $key = $table . ':' . $column;
@@ -184,79 +257,137 @@ function ensure_report_indexes_on_init($conn) {
             }
         }
     } catch (Exception $e) {
+        // Silently fail
     }
 }
 
-// Auto-fix for menu access integrity (prevents missing menus issue)
-function ensure_menu_access_on_init($conn) {
-    static $done = false;
-    if ($done) return;
-    $done = true;
-    
-    if (!$conn) return;
-    
-    try {
-        // Check menu_access table exists and has records
-        $result = $conn->query("SELECT COUNT(*) as cnt FROM menu_access");
-        if (!$result) return;
-        
-        $row = $result->fetch_assoc();
-        // Hanya seed awal jika tabel benar-benar kosong (bukan saat admin menonaktifkan menu)
-        if ((int)$row['cnt'] > 0) return;
-        
-        // Need to rebuild menu_access
-        $conn->query("TRUNCATE TABLE menu_access");
-        
-        $roles_result = $conn->query("SELECT id FROM roles");
-        if (!$roles_result) return;
-        
-        $roles = [];
-        while ($r = $roles_result->fetch_assoc()) {
-            $roles[] = $r['id'];
+
+// -----------------------------------------------------------------------------
+// 6. AUTO-FIX INTEGRITAS MENU ACCESS
+// -----------------------------------------------------------------------------
+function ensure_kasir_role_access($conn) {
+    if (!$conn || !($conn instanceof mysqli) || $conn->connect_error) {
+        return;
+    }
+
+    // Check if auto-fix is disabled
+    if (defined('DISABLE_MENU_ACCESS_AUTO_FIX') && DISABLE_MENU_ACCESS_AUTO_FIX) {
+        error_log("ensure_kasir_role_access: DISABLED by flag");
+        return;
+    }
+
+    $roleNames = ['Kasir', 'Kasir POS'];
+    $roleIds = [];
+
+    foreach ($roleNames as $roleName) {
+        $stmt = $conn->prepare('SELECT id FROM roles WHERE LOWER(TRIM(nama_role)) = LOWER(TRIM(?)) LIMIT 1');
+        if (!$stmt) {
+            continue;
         }
-        
-        if (empty($roles)) return;
-        
-        $menus = ['dashboard', 'gudang', 'gudang_central', 'gudang_antapani', 'master', 'barang', 'supplier', 'satuan', 'kategori', 'mapping_items', 'konversi_masukan', 'transaksi', 'stok_masuk', 'stok_keluar', 'stok_transfer', 'adjustment_in', 'adjustment_out', 'pembelian', 'purchase_order', 'approve', 'pembelian_direct', 'payment', 'vendor_refund', 'manufacture', 'laporan', 'laporan_pembelian', 'laporan_transfer', 'laporan_adjustment_in', 'laporan_adjustment_out', 'order_management', 'cashier', 'backoffice', 'backoffice_dashboard', 'backoffice_reports_inventory', 'backoffice_reports_finance', 'backoffice_reports_po', 'backoffice_reports_inventory_price', 'backoffice_reports_item_movement', 'backoffice_users', 'backoffice_roles', 'setup', 'user', 'reset_stok', 'edit_nama_gudang', 'template_po', 'barcode', 'get_wa', 'menu_access', 'absensi', 'tambah_gudang', 'hpp'];
-        
-        foreach ($roles as $role_id) {
-            $is_admin = ($role_id == 1);
-            foreach ($menus as $menu) {
-                $can_view = 1;
-                $can_add = $is_admin ? 1 : 0;
-                $can_edit = $is_admin ? 1 : 0;
-                $can_delete = $is_admin ? 1 : 0;
-                
-                if (in_array($menu, ['dashboard', 'gudang', 'gudang_central', 'gudang_antapani', 'laporan', 'absensi'])) {
-                    $can_view = 1;
+        $stmt->bind_param('s', $roleName);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $row = $res ? $res->fetch_assoc() : null;
+        $stmt->close();
+
+        if ($row && isset($row['id'])) {
+            $roleIds[] = (int)$row['id'];
+            continue;
+        }
+
+        $ins = $conn->prepare('INSERT INTO roles (nama_role, deskripsi) VALUES (?, ?)');
+        if ($ins) {
+            $desc = 'Role khusus aplikasi kasir POS';
+            $ins->bind_param('ss', $roleName, $desc);
+            $ins->execute();
+            $roleIds[] = (int)$conn->insert_id;
+            $ins->close();
+        }
+    }
+
+    $roleIds = array_values(array_unique(array_filter($roleIds, static fn($id) => (int)$id > 0)));
+    if (empty($roleIds)) {
+        return;
+    }
+
+    foreach ($roleIds as $roleId) {
+        foreach (['cashier', 'dashboard', 'user', 'setup', 'order_management', 'orders', 'delivery', 'mobile'] as $menuName) {
+            $exists = $conn->prepare('SELECT id FROM menu_access WHERE role_id = ? AND menu_name = ? LIMIT 1');
+            if ($exists) {
+                $exists->bind_param('is', $roleId, $menuName);
+                $exists->execute();
+                $check = $exists->get_result();
+                $already = $check && $check->fetch_assoc();
+                $exists->close();
+
+                // Never overwrite an existing row — that would re-enable menus the admin disabled.
+                if ($already) {
+                    continue;
                 }
-                
-                $menu_esc = $conn->real_escape_string($menu);
-                $sql = "INSERT INTO menu_access (role_id, menu_name, can_view, can_add, can_edit, can_delete, can_complete, can_setup_split) VALUES ($role_id, '$menu_esc', $can_view, $can_add, $can_edit, $can_delete, 0, 0)";
-                $conn->query($sql);
             }
+
+            $hasComplete = $conn->query("SHOW COLUMNS FROM menu_access LIKE 'can_complete'")->num_rows > 0;
+            $hasSetupSplit = $conn->query("SHOW COLUMNS FROM menu_access LIKE 'can_setup_split'")->num_rows > 0;
+            $hasSendWa = $conn->query("SHOW COLUMNS FROM menu_access LIKE 'can_send_wa'")->num_rows > 0;
+
+            $canAdd = ($menuName === 'cashier') ? 1 : 0;
+            if ($hasComplete && $hasSetupSplit && $hasSendWa) {
+                $sql = "INSERT INTO menu_access (role_id, menu_name, can_view, can_add, can_edit, can_delete, can_complete, can_setup_split, can_send_wa) VALUES (?, ?, 1, ?, 0, 0, 0, 0, 0)";
+            } elseif ($hasComplete && $hasSetupSplit) {
+                $sql = "INSERT INTO menu_access (role_id, menu_name, can_view, can_add, can_edit, can_delete, can_complete, can_setup_split) VALUES (?, ?, 1, ?, 0, 0, 0, 0)";
+            } elseif ($hasComplete) {
+                $sql = "INSERT INTO menu_access (role_id, menu_name, can_view, can_add, can_edit, can_delete, can_complete) VALUES (?, ?, 1, ?, 0, 0, 0)";
+            } elseif ($hasSetupSplit) {
+                $sql = "INSERT INTO menu_access (role_id, menu_name, can_view, can_add, can_edit, can_delete, can_setup_split) VALUES (?, ?, 1, ?, 0, 0, 0)";
+            } else {
+                $sql = "INSERT INTO menu_access (role_id, menu_name, can_view, can_add, can_edit, can_delete) VALUES (?, ?, 1, ?, 0, 0)";
+            }
+
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                continue;
+            }
+            $stmt->bind_param('isi', $roleId, $menuName, $canAdd);
+            $stmt->execute();
+            $stmt->close();
         }
-        
-        $conn->query("UPDATE menu_access SET can_view = 1, can_add = 1, can_edit = 1, can_delete = 1 WHERE role_id = 1");
-    } catch (Exception $e) {
-        // Silently fail if auto-fix doesn't work
     }
 }
 
-// Initialize menu access integrity check
+function ensure_menu_access_on_init($conn) {
+    // Intentionally a no-op: inserting "missing" menus here re-enabled
+    // access that had been turned off in Pengaturan Hak Akses.
+    return;
+}
+
+// Inisialisasi pengecekan integrasi menu & indeks
 if (isset($conn) && $conn && !$conn->connect_error) {
-    $authInitConn = auth_db_conn();
-    if ($authInitConn) {
-        ensure_menu_access_on_init($authInitConn);
+    // Skip auto-fix if explicitly disabled
+    if (!DISABLE_MENU_ACCESS_AUTO_FIX) {
+        $authInitConn = auth_db_conn();
+        if ($authInitConn) {
+            ensure_menu_access_on_init($authInitConn);
+            ensure_kasir_role_access($authInitConn);
+        }
+        if (function_exists('ensureUserMenuAccess')) {
+            @include_once __DIR__ . '/includes/ensure_menu_access.php';
+        }
     }
     ensure_report_indexes_on_init($conn);
     
-    // Also ensure current user has menu access (for session restore)
-    if (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
-        @include_once __DIR__ . '/includes/ensure_menu_access.php';
+    // Pastikan user saat ini memiliki akses menu (jika session aktif)
+    // Skip jika auto-fix disabled
+    if (!DISABLE_MENU_ACCESS_AUTO_FIX) {
+        if (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
+            @include_once __DIR__ . '/includes/ensure_menu_access.php';
+        }
     }
 }
 
+
+// -----------------------------------------------------------------------------
+// 7. OTOMATISASI RESET STOK HARIAN ON-REQUEST
+// -----------------------------------------------------------------------------
 if (!function_exists('auto_reset_stok_harian_on_request')) {
     function auto_reset_stok_harian_on_request($conn) {
         static $done = false;
@@ -391,6 +522,7 @@ if (!function_exists('auto_reset_stok_harian_on_request')) {
     }
 }
 
+// Jalankan otomatisasi reset jika dipanggil lewat web server
 if (PHP_SAPI !== 'cli' && isset($conn) && $conn && !$conn->connect_error) {
     auto_reset_stok_harian_on_request($conn);
 }

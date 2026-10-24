@@ -34,6 +34,11 @@ $sql = "SELECT ma.*, r.nama_role
         FROM menu_access ma 
         INNER JOIN roles r ON ma.role_id = r.id 
         WHERE ma.id = ?";
+if (!isset($conn) || !$conn instanceof mysqli) {
+    $_SESSION['error'] = "Koneksi database tidak tersedia!";
+    header("Location: index.php");
+    exit();
+}
 $stmt = $conn->prepare($sql);
 $stmt->bind_param('i', $id);
 $stmt->execute();
@@ -71,6 +76,7 @@ $menu_names = [
     'laporan_stok' => 'Laporan Stok',
     'laporan_pembelian' => 'Laporan Pembelian',
     'laporan_transfer' => 'Laporan Transfer',
+    'cashier' => 'Kasir POS',
     'user' => 'Manajemen User',
     'menu_access' => 'Menu Access Management',
     'setup' => 'Setup',

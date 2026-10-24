@@ -44,8 +44,13 @@ if (!function_exists('getActiveUploadedTemplate')) {
         }
 
         $stmt->bind_param('s', $kategori);
-        $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
+        if (!$stmt->execute()) {
+            $stmt->close();
+            $cache[$kategori] = null;
+            return null;
+        }
+        $res = $stmt->get_result();
+        $row = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
         $stmt->close();
 
         if (!$row || empty($row['file_path'])) {

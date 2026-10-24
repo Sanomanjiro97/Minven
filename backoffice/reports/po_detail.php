@@ -79,7 +79,8 @@ if ($boMainConn) {
     if ($stmt) {
         $stmt->bind_param('i', $poId);
         $stmt->execute();
-        $header = $stmt->get_result()->fetch_assoc();
+        $tmp_header = $stmt->get_result();
+        $header = ($tmp_header && $tmp_header instanceof mysqli_result) ? $tmp_header->fetch_assoc() : null;
         $stmt->close();
     }
 

@@ -3,7 +3,7 @@ session_start();
 require_once 'config.php';
 
 $error = null;
-$authConn = auth_db_conn();
+$authConn = resolve_user_db_conn();
 if (!$authConn) {
     $authConn = $conn;
 }
@@ -32,12 +32,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (password_verify($password, $user['password'])) {
             if ($user['is_active'] == 1) {
                 session_regenerate_id(true);
+                unset(
+                    $_SESSION['kasir_user_id'],
+                    $_SESSION['kasir_username'],
+                    $_SESSION['kasir_nama'],
+                    $_SESSION['kasir_role_id'],
+                    $_SESSION['kasir_role_name']
+                );
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['nama'] = $user['nama'];
                 $_SESSION['role_id'] = $user['role_id'];
                 $_SESSION['nama_role'] = $user['nama_role'] ?? '';
-                header("Location: dashboard.php");
+                $kasirRole = null;
+                $kasirAccessStmt = $authConn->prepare("SELECT ur.role_id, kasir_role.nama_role
+                    FROM user_roles ur
+                    INNER JOIN roles kasir_role ON kasir_role.id = ur.role_id
+                    WHERE ur.user_id = ?
+                      AND LOWER(TRIM(kasir_role.nama_role)) = 'kasir'
+                    LIMIT 1");
+                if ($kasirAccessStmt) {
+                    $kasirAccessStmt->bind_param('i', $user['id']);
+                    $kasirAccessStmt->execute();
+                    $kasirAccessResult = $kasirAccessStmt->get_result();
+                    $kasirRole = $kasirAccessResult ? $kasirAccessResult->fetch_assoc() : null;
+                    $kasirAccessStmt->close();
+                }
+
+                if ($kasirRole) {
+                    $_SESSION['kasir_user_id'] = (int)$user['id'];
+                    $_SESSION['kasir_username'] = (string)$user['username'];
+                    $_SESSION['kasir_nama'] = (string)($user['nama'] ?? '');
+                    $_SESSION['kasir_role_id'] = (int)$kasirRole['role_id'];
+                    $_SESSION['kasir_role_name'] = (string)($kasirRole['nama_role'] ?? 'Kasir');
+                    $redirectTarget = url_for('kasir/dashboard.php');
+                } else {
+                    $redirectTarget = url_for('dashboard.php');
+                }
+                header('Location: ' . $redirectTarget);
                 exit();
             } else {
                 $error = "User inaktif harap hubungi administrator!";
@@ -240,96 +272,106 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         @media (max-width: 992px) {
             body {
-                padding: 20px;
+                padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
                 height: auto;
                 min-height: 100vh;
-                display: block;
+                min-height: 100svh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 overflow-y: auto;
+                background: linear-gradient(145deg, #eaf2fb 0%, #f7f9fc 58%, #e8eef7 100%);
             }
 
             .login-split-container {
                 flex-direction: column-reverse;
-                max-width: 600px;
+                max-width: 520px;
                 margin: 0 auto;
                 height: auto;
-                background: rgba(10, 15, 26, 0.72);
-                border: 1px solid rgba(255, 255, 255, 0.12);
-                box-shadow: 0 18px 55px rgba(0, 0, 0, 0.42);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
+                background: #ffffff;
+                border: 1px solid rgba(23, 49, 84, 0.08);
+                border-radius: 22px;
+                box-shadow: 0 22px 60px rgba(26, 48, 78, 0.14);
             }
 
             .login-welcome-section {
-                padding: 40px 20px;
-                min-height: 200px;
+                padding: 28px 20px;
+                min-height: 190px;
                 height: auto;
-                background: radial-gradient(circle at 20% 10%, rgba(11, 102, 255, 0.42) 0%, rgba(11, 102, 255, 0.0) 52%),
-                            radial-gradient(circle at 80% 0%, rgba(139, 92, 246, 0.34) 0%, rgba(139, 92, 246, 0.0) 58%),
-                            linear-gradient(135deg, rgba(15, 23, 42, 0.42) 0%, rgba(10, 15, 26, 0.1) 100%);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+                background: linear-gradient(140deg, #12345a 0%, #0758a5 100%);
+                border-bottom: 0;
             }
 
             .login-welcome-section .logo-img {
-                width: 100px;
+                width: 82px;
+                margin-bottom: 12px;
             }
 
             .login-form-section {
-                padding: 40px 30px;
-                background: transparent;
-                color: rgba(255, 255, 255, 0.92);
+                padding: 32px 34px 22px;
+                background: #ffffff;
+                color: #26364a;
                 height: auto;
             }
 
             .login-form-section h2 {
-                color: #ffffff;
+                color: #173154;
+                margin-bottom: 22px;
             }
 
             .form-label {
-                color: rgba(255, 255, 255, 0.78);
+                color: #53657b;
             }
 
             .form-control {
-                background: rgba(255, 255, 255, 0.06);
-                border-color: rgba(255, 255, 255, 0.14);
-                color: rgba(255, 255, 255, 0.92);
+                background: #ffffff;
+                border-color: #d8e0e9;
+                color: #26364a;
             }
 
             .form-control::placeholder {
-                color: rgba(255, 255, 255, 0.55);
+                color: #8795a7;
             }
 
             .form-control:focus {
-                border-color: rgba(11, 102, 255, 0.85);
-                box-shadow: 0 0 0 0.2rem rgba(11, 102, 255, 0.25);
+                border-color: #1768b2;
+                box-shadow: 0 0 0 0.2rem rgba(23, 104, 178, 0.14);
             }
 
             .btn-login {
-                background: linear-gradient(135deg, #0b66ff 0%, #8b5cf6 100%);
-                box-shadow: 0 12px 28px rgba(11, 102, 255, 0.28);
+                background: linear-gradient(135deg, #1768b2 0%, #124a80 100%);
+                box-shadow: 0 8px 20px rgba(23, 104, 178, 0.2);
             }
 
             .btn-login:hover {
-                background: linear-gradient(135deg, #0a5cf0 0%, #7c4cf0 100%);
+                background: linear-gradient(135deg, #145d9f 0%, #103f6d 100%);
             }
 
             .copyright-footer {
-                color: rgba(255, 255, 255, 0.72);
-                margin-top: 2rem;
+                color: #7b8795;
+                margin-top: 1.25rem;
+            }
+
+            .login-form-section footer {
+                color: #7b8795 !important;
+                font-size: 0.78rem;
+                padding-bottom: 0 !important;
             }
         }
 
         @media (max-width: 576px) {
             body {
-                padding: 10px;
+                padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
             }
 
             .login-split-container {
                 max-width: 100%;
-                margin-top: 10px;
+                margin: 0 auto;
+                border-radius: 18px;
             }
 
             .login-welcome-section h1 {
-                font-size: 1.5rem;
+                font-size: 1.35rem;
             }
             
             .login-welcome-section p {
@@ -337,11 +379,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
 
             .login-form-section {
-                padding: 30px 20px;
+                padding: 26px 22px 20px;
             }
 
             .login-form-section h2 {
-                font-size: 1.5rem;
+                font-size: 1.45rem;
             }
         }
     </style>
@@ -429,15 +471,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </form>
             </div>
             
-            <div class="copyright-footer">
-                <span>© 2025 — MINVEN <span class="minven-brand-pro">PRO</span>® | All Rights Reserved.</span>
-            </div>
+           <footer class="text-center text-muted py-3">
+    &copy; <?= date('Y'); ?> MINVEN <strong>PRO</strong>. All rights reserved.
+</footer>
         </div>
         
         <div class="login-welcome-section">
             <img src="<?= htmlspecialchars(url_for('asset/LOGO1.png')) ?>" alt="MINVEN Logo" class="logo-img">
             <h1>MINVEN <span class="minven-brand-pro">PRO</span></h1>
-            <p>Mobile Inventory</p>
+            <p>Minven APPS</p>
         </div> 
     </div>
 

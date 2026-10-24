@@ -1,0 +1,430 @@
+/**
+ * Mobile Enhancement CSS untuk MINVEN PRO
+ * Desain mobile yang lebih elegan dan modern
+ * Hanya mempengaruhi tampilan mobile (max-width: 1199.98px)
+ * TIDAK mempengaruhi tampilan desktop
+ */
+
+/* Mobile Specific Improvements - Hanya aktif di mobile */
+@media (max-width: 1199.98px) {
+    /* Override default mobile nav dengan gaya lebih elegan */
+    .minven-mobile-nav {
+        padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+        background: linear-gradient(180deg, rgba(0, 8, 249, 0.98) 0%, rgba(0, 4, 68, 0.99) 100%);
+        backdrop-filter: blur(35px);
+        -webkit-backdrop-filter: blur(35px);
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 -15px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15);
+    }
+    /* Better spacing for mobile */
+    .dash-shell {
+        margin: 12px;
+        padding: 12px;
+    }
+    
+    /* Enhanced mobile navigation */
+    .minven-mobile-nav {
+        padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+    
+    .minven-mobile-nav__inner {
+        gap: 8px;
+    }
+    
+    .minven-mobile-nav__item {
+        min-height: 70px;
+        padding: 14px 8px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .minven-mobile-nav__item::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(0, 8, 249, 0.4);
+        transform: translate(-50%, -50%);
+        transition: width 0.8s ease, height 0.8s ease;
+    }
+    
+    .minven-mobile-nav__item:active::before {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .minven-mobile-nav__icon {
+        font-size: 26px;
+        line-height: 1;
+        transition: transform 0.4s ease;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .minven-mobile-nav__item:active .minven-mobile-nav__icon {
+        transform: scale(0.85);
+    }
+    
+    .minven-mobile-nav__label {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: none;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .minven-mobile-nav__item.active {
+        color: #ffffff;
+        border-color: rgba(0, 8, 249, 0.6);
+        background: linear-gradient(135deg, rgba(0, 8, 249, 0.3) 0%, rgba(0, 4, 68, 0.25) 100%);
+        box-shadow: 0 8px 32px rgba(0, 8, 249, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+    
+    .minven-mobile-nav__item.active .minven-mobile-nav__icon {
+        filter: drop-shadow(0 0 16px rgba(0, 8, 249, 1));
+        transform: scale(1.15);
+    }
+    
+    /* Enhanced mobile sheet */
+    .minven-mobile-sheet {
+        max-width: 90%;
+    }
+    
+    .minven-mobile-sheet .offcanvas-header {
+        padding: 24px 28px 20px 28px;
+        background: linear-gradient(180deg, rgba(0, 8, 249, 0.7) 0%, rgba(0, 4, 68, 0.5) 100%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    
+    .minven-mobile-sheet .offcanvas-body {
+        padding: 20px 28px 40px 28px;
+        background: linear-gradient(180deg, rgba(0, 4, 68, 0.98) 0%, rgba(0, 2, 34, 0.95) 100%);
+    }
+    
+    .minven-mobile-sheet .minven-sheet-handle {
+        width: 56px;
+        height: 6px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.12));
+        margin: 16px auto 0 auto;
+    }
+    
+    .minven-mobile-sheet .list-group-item {
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 18px !important;
+        margin-bottom: 14px;
+        padding: 18px 20px;
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.95);
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    
+    .minven-mobile-sheet .list-group-item:hover {
+        background: rgba(0, 8, 249, 0.2);
+        border-color: rgba(0, 8, 249, 0.5);
+        transform: translateX(6px);
+        box-shadow: 0 6px 24px rgba(0, 8, 249, 0.3);
+    }
+    
+    .minven-mobile-sheet .list-group-item i {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: rgba(0, 8, 249, 0.2);
+        color: #0008f9;
+        font-size: 16px;
+    }
+    
+    /* Enhanced dashboard cards for mobile */
+    .hero-card {
+        padding: 20px;
+        border-radius: 24px;
+    }
+    
+    .hero-card__title {
+        font-size: 24px;
+    }
+    
+    .hero-card__desc {
+        font-size: 13px;
+    }
+    
+    .hero-chip {
+        padding: 8px 12px;
+        border-radius: 14px;
+        font-size: 12px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .stat-card {
+        padding: 16px;
+        border-radius: 18px;
+    }
+    
+    /* Better touch targets */
+    button, a, .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Improved mobile typography */
+    h1, h2, h3, h4, h5, h6 {
+        letter-spacing: -0.02em;
+    }
+    
+    /* Better spacing */
+    .dash-overview {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    /* Enhanced table for mobile */
+    .table-responsive {
+        border-radius: 16px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .table {
+        font-size: 13px;
+    }
+    
+    .table thead th {
+        padding: 12px 10px;
+        font-size: 11px;
+    }
+    
+    .table tbody td {
+        padding: 12px 10px;
+    }
+    
+    /* Improved form elements for mobile */
+    .form-control, .form-select {
+        padding: 12px 16px;
+        font-size: 16px; /* Prevents zoom on iOS */
+        border-radius: 12px;
+    }
+    
+    .btn {
+        padding: 12px 20px;
+        font-size: 15px;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+    
+    /* Better card shadows for mobile */
+    .card-3d {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+    
+    /* Improved navigation dropdown for mobile */
+    .dropdown-menu {
+        border-radius: 16px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .dropdown-item {
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin: 4px 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .dropdown-item:hover {
+        background: rgba(0, 86, 179, 0.1);
+        transform: translateX(2px);
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 576px) {
+    .dash-shell {
+        margin: 8px;
+        padding: 8px;
+    }
+    
+    .minven-mobile-nav {
+        padding: 6px 10px calc(6px + env(safe-area-inset-bottom));
+    }
+    
+    .minven-mobile-nav__item {
+        min-height: 60px;
+        padding: 10px 4px;
+    }
+    
+    .minven-mobile-nav__icon {
+        font-size: 20px;
+    }
+    
+    .minven-mobile-nav__label {
+        font-size: 10px;
+    }
+    
+    .hero-card {
+        padding: 16px;
+        border-radius: 20px;
+    }
+    
+    .hero-card__title {
+        font-size: 20px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .stat-card {
+        padding: 14px;
+        border-radius: 16px;
+    }
+    
+    .form-control, .form-select {
+        padding: 10px 14px;
+        font-size: 16px;
+    }
+    
+    .btn {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 360px) {
+    .minven-mobile-nav__icon {
+        font-size: 18px;
+    }
+    
+    .minven-mobile-nav__label {
+        font-size: 9px;
+    }
+    
+    .hero-card__title {
+        font-size: 18px;
+    }
+}
+
+/* Smooth scrolling for mobile */
+@media (max-width: 1199.98px) {
+    html {
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Hide scrollbar but keep functionality */
+    ::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+    }
+}
+
+/* Enhanced touch feedback */
+@media (max-width: 1199.98px) {
+    * {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+    }
+    
+    /* Better active states */
+    .btn:active, a:active, button:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+    
+    /* Better focus states for accessibility */
+    .btn:focus, a:focus, button:focus {
+        outline: 2px solid rgba(0, 86, 179, 0.6);
+        outline-offset: 2px;
+    }
+}
+
+/* Improved loading states for mobile */
+@media (max-width: 1199.98px) {
+    .loading-overlay {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(8px);
+    }
+    
+    .spinner-border {
+        width: 2rem;
+        height: 2rem;
+    }
+}
+
+/* Better modal for mobile */
+@media (max-width: 1199.98px) {
+    .modal-content {
+        border-radius: 20px;
+        margin: 20px;
+    }
+    
+    .modal-header {
+        padding: 16px 20px;
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .modal-footer {
+        padding: 16px 20px;
+        border-radius: 0 0 20px 20px;
+    }
+}
+
+/* Enhanced alert boxes for mobile */
+@media (max-width: 1199.98px) {
+    .alert {
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 16px;
+        border: none;
+    }
+    
+    .alert-success {
+        background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+        border-left: 4px solid #28a745;
+    }
+    
+    .alert-danger {
+        background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+        border-left: 4px solid #dc3545;
+    }
+    
+    .alert-warning {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+        border-left: 4px solid #ffc107;
+    }
+    
+    .alert-info {
+        background: linear-gradient(135deg, rgba(13, 202, 240, 0.1) 0%, rgba(13, 202, 240, 0.05) 100%);
+        border-left: 4px solid #0dcaf0;
+    }
+}

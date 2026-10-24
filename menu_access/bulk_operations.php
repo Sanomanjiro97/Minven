@@ -20,6 +20,10 @@ $success = null;
 
 // Get all roles
 $roles_sql = "SELECT id, nama_role FROM roles ORDER BY nama_role";
+if (!isset($conn) || !$conn) {
+
+    die("Koneksi database gagal: " . mysqli_connect_error());
+}
 $roles_result = $conn->query($roles_sql);
 $roles = [];
 while ($role = $roles_result->fetch_assoc()) {
@@ -52,6 +56,7 @@ $available_menus = [
     'laporan_stok' => 'Laporan Stok',
     'laporan_pembelian' => 'Laporan Pembelian',
     'laporan_transfer' => 'Laporan Transfer',
+    'cashier' => 'Kasir POS',
     'user' => 'Manajemen User',
     'menu_access' => 'Menu Access Management',
     'setup' => 'Setup',

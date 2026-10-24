@@ -36,7 +36,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $jumlah = $_POST['jumlah'] ?? [];
     $harga_satuan = $_POST['harga_satuan'] ?? [];
     $keterangan_detail = $_POST['keterangan_detail'] ?? [];
+
+    // Get user's lokasi_id and default payment method for automatic assignment
+    $user_lokasi_id = null;
+    $default_payment_method = 'cash'; // Default fallback
     
+    if (isset($_SESSION['user_id'])) {
+        // Get user's lokasi_id
+        $sql_user = "SELECT lokasi_id FROM users WHERE id = ?";
+        $stmt_user = $conn->prepare($sql_user);
+        if ($stmt_user) {
+            $stmt_user->bind_param('i', $_SESSION['user_id']);
+            $stmt_user->execute();
+            $result_user = $stmt_user->get_result();
+            if ($row_user = $result_user->fetch_assoc()) {
+                $user_lokasi_id = $row_user['lokasi_id'];
+            }
+            $stmt_user->close();
+        }
+        
+        // Get default payment method based on user's location
+        if ($user_lokasi_id) {
+            $sql_payment = "SELECT default_payment_method FROM lokasi_payment_mapping WHERE lokasi_id = ?";
+            $stmt_payment = $conn->prepare($sql_payment);
+            if ($stmt_payment) {
+                $stmt_payment->bind_param('i', $user_lokasi_id);
+                $stmt_payment->execute();
+                $result_payment = $stmt_payment->get_result();
+                if ($row_payment = $result_payment->fetch_assoc()) {
+                    $default_payment_method = $row_payment['default_payment_method'];
+                }
+                $stmt_payment->close();
+            }
+        }
+    }
+    
+    // Use default payment method if not explicitly set in form
+    if (!isset($_POST['payment_method']) || empty($_POST['payment_method'])) {
+        $payment_method = $default_payment_method;
+    }
+
     // Konversi Satuan
     $satuan_asal_ids = $_POST['satuan_asal_id'] ?? [];
     $satuan_tujuan_ids = $_POST['satuan_tujuan_id'] ?? [];
@@ -129,6 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $selected = trim((string)$barang_id);
         $qty = isset($jumlah[$index]) ? (int)$jumlah[$index] : 0;
         $price = $parse_harga_to_float($harga_satuan[$index] ?? '0');
+        $lokasi_mapping = $user_lokasi_id; // Use user's lokasi_id automatically
 
         if ($selected === '') {
             $_SESSION['error'] = "Ada item yang belum memilih barang.";
@@ -156,6 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'harga_satuan' => $price,
             'total_harga' => $item_total,
             'keterangan_detail' => $keterangan_detail[$index] ?? '',
+            'lokasi_mapping' => $lokasi_mapping,
             'satuan_asal_id' => $satuan_asal_ids[$index] ?? null,
             'satuan_tujuan_id' => $satuan_tujuan_ids[$index] ?? null,
             'nilai_konversi' => $nilai_konversis[$index] ?? null
@@ -177,16 +218,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             throw new Exception("Database error: " . $conn->error);
         }
 
-        // Insert header PO
-        $sql = "INSERT INTO purchase_order (no_po, tanggal, supplier_id, total_item, total_harga, keterangan, status, created_by, payment_method)
-                VALUES (?, ?, ?, ?, ?, ?, 'draft', ?, ?)";
+        // Insert header PO with location_id
+        $sql = "INSERT INTO purchase_order (no_po, tanggal, supplier_id, total_item, total_harga, keterangan, status, created_by, payment_method, location_id)
+                VALUES (?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?)";
         $stmt = $conn->prepare($sql);
         
         if ($stmt === false) {
             throw new Exception("Database error: " . $conn->error);
         }
         
-        $stmt->bind_param('ssiidsss', $no_po, $tanggal, $supplier_id, $total_item, $total_harga_po, $keterangan, $_SESSION['user_id'], $payment_method);
+        $stmt->bind_param('ssiidsssi', $no_po, $tanggal, $supplier_id, $total_item, $total_harga_po, $keterangan, $_SESSION['user_id'], $payment_method, $user_lokasi_id);
 
         if (!$stmt->execute()) {
              throw new Exception("Gagal membuat Purchase Order: " . $stmt->error);
@@ -196,8 +237,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Insert detail PO
         $sql_detail = "INSERT INTO detail_purchase_order 
-                       (purchase_order_id, barang_id, jumlah, harga_satuan, total_harga, keterangan_detail)
-                       VALUES (?, ?, ?, ?, ?, ?)";
+                       (purchase_order_id, barang_id, jumlah, harga_satuan, total_harga, keterangan_detail, lokasi_mapping)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)";
         $stmt_detail = $conn->prepare($sql_detail);
 
         foreach ($detail_items as $item) {
@@ -244,13 +285,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 }
             }
 
-            $stmt_detail->bind_param('iiidds',
+            $stmt_detail->bind_param('iiiddss',
                 $purchase_order_id,
                 $final_barang_id,
                 $item['jumlah'],
                 $item['harga_satuan'],
                 $item['total_harga'],
-                $item['keterangan_detail']
+                $item['keterangan_detail'],
+                $item['lokasi_mapping']
             );
             if (!$stmt_detail->execute()) {
                 throw new Exception("Gagal menyimpan detail item: " . $stmt_detail->error);
@@ -303,6 +345,45 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 // Query untuk dropdown supplier
 $sql_supplier = "SELECT id, nama_supplier FROM supplier ORDER BY nama_supplier";
 $supplier_result = $conn->query($sql_supplier);
+
+// Get user's location and default payment method for form display
+$user_lokasi_id = null;
+$user_lokasi_name = '';
+$default_payment_method = 'cash';
+
+if (isset($_SESSION['user_id'])) {
+    // Get user's lokasi_id
+    $sql_user = "SELECT u.lokasi_id, l.nama_lokasi 
+                 FROM users u 
+                 LEFT JOIN lokasi_mapping l ON u.lokasi_id = l.id 
+                 WHERE u.id = ?";
+    $stmt_user = $conn->prepare($sql_user);
+    if ($stmt_user) {
+        $stmt_user->bind_param('i', $_SESSION['user_id']);
+        $stmt_user->execute();
+        $result_user = $stmt_user->get_result();
+        if ($row_user = $result_user->fetch_assoc()) {
+            $user_lokasi_id = $row_user['lokasi_id'];
+            $user_lokasi_name = $row_user['nama_lokasi'];
+        }
+        $stmt_user->close();
+    }
+    
+    // Get default payment method based on user's location
+    if ($user_lokasi_id) {
+        $sql_payment = "SELECT default_payment_method FROM lokasi_payment_mapping WHERE lokasi_id = ?";
+        $stmt_payment = $conn->prepare($sql_payment);
+        if ($stmt_payment) {
+            $stmt_payment->bind_param('i', $user_lokasi_id);
+            $stmt_payment->execute();
+            $result_payment = $stmt_payment->get_result();
+            if ($row_payment = $result_payment->fetch_assoc()) {
+                $default_payment_method = $row_payment['default_payment_method'];
+            }
+            $stmt_payment->close();
+        }
+    }
+}
 
 ?>
 <!DOCTYPE html>
@@ -424,9 +505,15 @@ $supplier_result = $conn->query($sql_supplier);
                         <div class="col-md-6">
                             <label for="payment_method" class="form-label">Metode Pembayaran</label>
                             <select class="form-select" id="payment_method" name="payment_method" required>
-                                <option value="cash">Cash</option>
-                                <option value="saldo">Saldo</option>
+                                <option value="cash" <?= $default_payment_method === 'cash' ? 'selected' : '' ?>>Cash</option>
+                                <option value="saldo" <?= $default_payment_method === 'saldo' ? 'selected' : '' ?>>Saldo</option>
                             </select>
+                            <div class="form-text">Metode pembayaran otomatis diset berdasarkan lokasi user (<?= htmlspecialchars($user_lokasi_name ?: 'Tidak ada lokasi') ?>)</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Lokasi User</label>
+                            <input type="text" class="form-control" value="<?= $user_lokasi_name ? htmlspecialchars($user_lokasi_name) : 'Tidak ada lokasi' ?>" disabled>
+                            <div class="form-text">Lokasi otomatis dari user yang login</div>
                         </div>
                     </div>
                     <div class="mb-3">

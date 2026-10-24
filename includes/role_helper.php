@@ -112,6 +112,7 @@ function getUserAccessibleMenus($user_id = null) {
     }
     
     if (!$user_id) return [];
+    if (!$conn || !($conn instanceof mysqli) || $conn->connect_error) return [];
     
     $sql = "SELECT DISTINCT ma.menu_name, ma.can_view, ma.can_add, ma.can_edit, ma.can_delete 
             FROM menu_access ma 
@@ -119,19 +120,26 @@ function getUserAccessibleMenus($user_id = null) {
             WHERE ur.user_id = ?";
     
     $stmt = $conn->prepare($sql);
+    if (!$stmt) return [];
     $stmt->bind_param('i', $user_id);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        $stmt->close();
+        return [];
+    }
     $result = $stmt->get_result();
     
     $menus = [];
-    while ($row = $result->fetch_assoc()) {
-        $menus[$row['menu_name']] = [
-            'can_view' => $row['can_view'],
-            'can_add' => $row['can_add'],
-            'can_edit' => $row['can_edit'],
-            'can_delete' => $row['can_delete']
-        ];
+    if ($result && $result instanceof mysqli_result) {
+        while ($row = $result->fetch_assoc()) {
+            $menus[$row['menu_name']] = [
+                'can_view' => $row['can_view'],
+                'can_add' => $row['can_add'],
+                'can_edit' => $row['can_edit'],
+                'can_delete' => $row['can_delete']
+            ];
+        }
     }
+    $stmt->close();
     
     return $menus;
 }

@@ -39,16 +39,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nama = $_POST['nama'];
     $email = $_POST['email'];
     $kode_pegawai = $_POST['kode_pegawai'];
+    $lokasi_id = isset($_POST['lokasi_id']) ? (int)$_POST['lokasi_id'] : null;
     $is_active = isset($_POST['is_active']) ? 1 : 0;
     $roles = isset($_POST['roles']) ? $_POST['roles'] : [];
-    
+
     try {
         $conn->begin_transaction();
-        
-        // Update data user dengan kode pegawai dan status
-        $update_sql = "UPDATE users SET nama = ?, email = ?, kode_pegawai = ?, is_active = ? WHERE id = ?";
-        $update_stmt = $conn->prepare($update_sql);
-        $update_stmt->bind_param("sssii", $nama, $email, $kode_pegawai, $is_active, $user_id);
+
+        // Update data user dengan kode pegawai, lokasi, dan status
+        $new_password = trim((string)($_POST['password'] ?? ''));
+        if ($new_password !== '') {
+            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+            $update_sql = "UPDATE users SET nama = ?, email = ?, kode_pegawai = ?, lokasi_id = ?, is_active = ?, password = ? WHERE id = ?";
+            $update_stmt = $conn->prepare($update_sql);
+            $update_stmt->bind_param("sssiisi", $nama, $email, $kode_pegawai, $lokasi_id, $is_active, $hashed_password, $user_id);
+        } else {
+            $update_sql = "UPDATE users SET nama = ?, email = ?, kode_pegawai = ?, lokasi_id = ?, is_active = ? WHERE id = ?";
+            $update_stmt = $conn->prepare($update_sql);
+            $update_stmt->bind_param("sssiii", $nama, $email, $kode_pegawai, $lokasi_id, $is_active, $user_id);
+        }
         $update_stmt->execute();
         
         // Hapus role lama
@@ -79,6 +88,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Ambil semua role yang tersedia
 $all_roles_sql = "SELECT * FROM roles";
 $all_roles_result = $conn->query($all_roles_sql);
+
+// Get lokasi_mapping for dropdown
+$lokasi_sql = "SELECT id, nama_lokasi, kode_lokasi FROM lokasi_mapping WHERE aktif = 1 ORDER BY nama_lokasi";
+$lokasi_result = $conn->query($lokasi_sql);
+$lokasi_list = [];
+while ($lokasi_row = $lokasi_result->fetch_assoc()) {
+    $lokasi_list[] = $lokasi_row;
+}
 ?>
 
 <!DOCTYPE html>
@@ -349,15 +366,39 @@ $all_roles_result = $conn->query($all_roles_sql);
                                 <label class="form-label-elegant">
                                     <i class='bx bx-user-detail me-2'></i>Nama Lengkap
                                 </label>
-                                <input type="text" class="form-control form-control-elegant" name="nama" 
+                                <input type="text" class="form-control form-control-elegant" name="nama"
                                        value="<?= htmlspecialchars($user['nama']) ?>" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label-elegant">
                                     <i class='bx bx-envelope me-2'></i>Email
                                 </label>
-                                <input type="email" class="form-control form-control-elegant" name="email" 
+                                <input type="email" class="form-control form-control-elegant" name="email"
                                        value="<?= htmlspecialchars($user['email']) ?>" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label-elegant">
+                                    <i class='bx bx-map me-2'></i>Lokasi
+                                </label>
+                                <select class="form-control form-control-elegant" name="lokasi_id">
+                                    <option value="">Pilih Lokasi</option>
+                                    <?php foreach ($lokasi_list as $lokasi_row): ?>
+                                        <option value="<?= (int)$lokasi_row['id'] ?>" <?= ($user['lokasi_id'] == $lokasi_row['id']) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($lokasi_row['nama_lokasi']) ?> (<?= htmlspecialchars($lokasi_row['kode_lokasi']) ?>)
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="form-text">Lokasi user untuk penentuan lokasi PO otomatis</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label-elegant">
+                                    <i class='bx bx-lock-alt me-2'></i>Password Baru
+                                </label>
+                                <input type="password" class="form-control form-control-elegant" name="password"
+                                       placeholder="Kosongkan jika tidak diubah" autocomplete="new-password">
+                                <div class="form-text">Isi untuk mereset password (wajib jika password di database bernilai 0)</div>
                             </div>
                         </div>
                     </div>

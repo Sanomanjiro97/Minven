@@ -5,6 +5,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Disable auto-fix menu access BEFORE loading config
+$GLOBALS['DISABLE_MENU_ACCESS_AUTO_FIX'] = true;
+$_SESSION['DISABLE_MENU_ACCESS_AUTO_FIX'] = true;
+
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/access_check.php';
 
@@ -380,8 +384,12 @@ if ($action === 'bo_users_create') {
     $stmt = $authConn->prepare("SELECT nama_role FROM roles WHERE id = ?");
     if ($stmt) {
         $stmt->bind_param('i', $roleId);
-        $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
+        if (!$stmt->execute()) {
+            $stmt->close();
+            api_json(['success' => false, 'message' => 'Database error'], 500);
+        }
+        $res = $stmt->get_result();
+        $row = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
         $roleName = (string)($row['nama_role'] ?? '');
         $stmt->close();
     }
@@ -448,8 +456,12 @@ if ($action === 'bo_users_update') {
     $stmt = $authConn->prepare("SELECT nama_role FROM roles WHERE id = ?");
     if ($stmt) {
         $stmt->bind_param('i', $roleId);
-        $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
+        if (!$stmt->execute()) {
+            $stmt->close();
+            api_json(['success' => false, 'message' => 'Database error'], 500);
+        }
+        $res = $stmt->get_result();
+        $row = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
         $roleName = (string)($row['nama_role'] ?? '');
         $stmt->close();
     }
@@ -606,8 +618,12 @@ if ($action === 'bo_roles_delete') {
         api_json(['success' => false, 'message' => 'Database error'], 500);
     }
     $stmt->bind_param('i', $roleId);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
+    if (!$stmt->execute()) {
+        $stmt->close();
+        api_json(['success' => false, 'message' => 'Database error'], 500);
+    }
+    $res = $stmt->get_result();
+    $row = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
     $stmt->close();
     if ((int)($row['c'] ?? 0) > 0) {
         api_json(['success' => false, 'message' => 'Role tidak dapat dihapus karena sedang digunakan.'], 400);
@@ -649,8 +665,12 @@ if ($action === 'bo_role_access_get') {
         api_json(['success' => false, 'message' => 'Database error'], 500);
     }
     $stmt->bind_param('i', $roleId);
-    $stmt->execute();
-    $role = $stmt->get_result()->fetch_assoc();
+    if (!$stmt->execute()) {
+        $stmt->close();
+        api_json(['success' => false, 'message' => 'Database error'], 500);
+    }
+    $res = $stmt->get_result();
+    $role = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
     $stmt->close();
     if (!$role) {
         api_json(['success' => false, 'message' => 'Role tidak ditemukan'], 404);
@@ -976,10 +996,14 @@ if ($action === 'bo_reports_finance') {
     $stmt = $mainConn->prepare("SELECT COALESCE(SUM(total_harga),0) AS t FROM pengeluaran WHERE tanggal BETWEEN ? AND ?");
     if ($stmt) {
         $stmt->bind_param('ss', $start, $end);
-        $stmt->execute();
-        $r = $stmt->get_result()->fetch_assoc();
-        $sum['pengeluaran'] = (float)($r['t'] ?? 0);
-        $stmt->close();
+        if (!$stmt->execute()) {
+            $stmt->close();
+        } else {
+            $res = $stmt->get_result();
+            $r = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+            $sum['pengeluaran'] = (float)($r['t'] ?? 0);
+            $stmt->close();
+        }
     }
 
     $stmt = $mainConn->prepare("SELECT COALESCE(SUM(total_harga),0) AS t FROM purchase_order WHERE tanggal BETWEEN ? AND ?" . ($supplierId > 0 ? " AND supplier_id = ?" : ""));
@@ -989,10 +1013,14 @@ if ($action === 'bo_reports_finance') {
         } else {
             $stmt->bind_param('ss', $start, $end);
         }
-        $stmt->execute();
-        $r = $stmt->get_result()->fetch_assoc();
-        $sum['po'] = (float)($r['t'] ?? 0);
-        $stmt->close();
+        if (!$stmt->execute()) {
+            $stmt->close();
+        } else {
+            $res = $stmt->get_result();
+            $r = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+            $sum['po'] = (float)($r['t'] ?? 0);
+            $stmt->close();
+        }
     }
 
     $stmt = $mainConn->prepare("SELECT COALESCE(SUM(total_harga),0) AS t FROM direct_purchase WHERE tanggal BETWEEN ? AND ?" . ($supplierId > 0 ? " AND supplier_id = ?" : ""));
@@ -1002,10 +1030,14 @@ if ($action === 'bo_reports_finance') {
         } else {
             $stmt->bind_param('ss', $start, $end);
         }
-        $stmt->execute();
-        $r = $stmt->get_result()->fetch_assoc();
-        $sum['direct_purchase'] = (float)($r['t'] ?? 0);
-        $stmt->close();
+        if (!$stmt->execute()) {
+            $stmt->close();
+        } else {
+            $res = $stmt->get_result();
+            $r = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+            $sum['direct_purchase'] = (float)($r['t'] ?? 0);
+            $stmt->close();
+        }
     }
 
     $res = $mainConn->query("SHOW TABLES LIKE 'vendor_refund'");
@@ -1033,10 +1065,14 @@ if ($action === 'bo_reports_finance') {
             } else {
                 $stmt->bind_param('ss', $start, $end);
             }
-            $stmt->execute();
-            $r = $stmt->get_result()->fetch_assoc();
-            $sum['pemasukan_refund'] = (float)($r['t'] ?? 0);
-            $stmt->close();
+            if (!$stmt->execute()) {
+                $stmt->close();
+            } else {
+                $res = $stmt->get_result();
+                $r = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+                $sum['pemasukan_refund'] = (float)($r['t'] ?? 0);
+                $stmt->close();
+            }
         }
     }
 
@@ -1250,9 +1286,13 @@ if ($action === 'bo_reports_po_detail') {
     ");
     if ($stmt) {
         $stmt->bind_param('i', $poId);
-        $stmt->execute();
-        $header = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
+        if (!$stmt->execute()) {
+            $stmt->close();
+        } else {
+            $res = $stmt->get_result();
+            $header = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+            $stmt->close();
+        }
     }
     if (!$header) {
         api_json(['success' => false, 'message' => 'PO tidak ditemukan'], 404);
@@ -1394,9 +1434,13 @@ if ($action === 'bo_reports_direct_detail') {
     ");
     if ($stmt) {
         $stmt->bind_param('i', $directId);
-        $stmt->execute();
-        $header = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
+        if (!$stmt->execute()) {
+            $stmt->close();
+        } else {
+            $res = $stmt->get_result();
+            $header = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+            $stmt->close();
+        }
     }
     if (!$header) {
         api_json(['success' => false, 'message' => 'Direct tidak ditemukan'], 404);

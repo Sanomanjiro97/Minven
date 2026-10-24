@@ -86,6 +86,9 @@ $sum = [
     'pendapatan_omset' => 0.0,
 ];
 
+$poBarTotal = 0.0;
+$poKitchenTotal = 0.0;
+
 $pengeluaranRows = [];
 $pendapatanRows = [];
 $refundRows = [];
@@ -117,7 +120,8 @@ if ($boMainConn) {
     if ($stmt) {
         $stmt->bind_param('ss', $start, $end);
         $stmt->execute();
-        $r = $stmt->get_result()->fetch_assoc();
+        $tmp_r = $stmt->get_result();
+        $r = ($tmp_r && $tmp_r instanceof mysqli_result) ? $tmp_r->fetch_assoc() : null;
         $sum['pengeluaran'] = (float)($r['t'] ?? 0);
         $stmt->close();
     }
@@ -142,9 +146,128 @@ if ($boMainConn) {
             $stmt->bind_param('ss', $start, $end);
         }
         $stmt->execute(); 
-        $r = $stmt->get_result()->fetch_assoc();
+        $tmp_r = $stmt->get_result();
+        $r = ($tmp_r && $tmp_r instanceof mysqli_result) ? $tmp_r->fetch_assoc() : null;
         $sum['po'] = (float)($r['t'] ?? 0);
         $stmt->close();
+    }
+
+    // 2.b. Breakdown Total PO per lokasi mapping (count POs, not sum values)
+    $resLokasiCol = $boMainConn->query("SHOW COLUMNS FROM detail_purchase_order LIKE 'lokasi_mapping'");
+    $hasLokasiMapping = $resLokasiCol && $resLokasiCol->num_rows > 0;
+
+    // Get all active locations
+    $lokasiList = [];
+    $poByLocation = [];
+
+    if ($hasLokasiMapping) {
+        $sqlLokasi = "SELECT id, nama_lokasi, kode_lokasi FROM lokasi_mapping WHERE aktif = 1 ORDER BY nama_lokasi";
+        $resLokasi = $boMainConn->query($sqlLokasi);
+        if ($resLokasi) {
+            while ($lokasi = $resLokasi->fetch_assoc()) {
+                $lokasiList[] = $lokasi;
+                $poByLocation[$lokasi['id']] = [
+                    'nama_lokasi' => $lokasi['nama_lokasi'],
+                    'kode_lokasi' => $lokasi['kode_lokasi'],
+                    'count' => 0,
+                    'total_value' => 0.0
+                ];
+            }
+        }
+
+        // Calculate PO item count for each location (only using lokasi_mapping from PO)
+        foreach ($lokasiList as $lokasi) {
+            $sqlPoByLokasi = "
+                SELECT COUNT(DISTINCT pod.id) AS item_count, COALESCE(SUM($poLineTotalExpr), 0) AS total_value
+                FROM purchase_order po
+                JOIN detail_purchase_order pod ON pod.purchase_order_id = po.id
+                WHERE po.tanggal BETWEEN ? AND ?
+                  AND po.status NOT IN ('menunggu', 'draft', 'rejected')
+                  AND $poDetailNotRejected
+                  AND pod.lokasi_mapping = ?
+            ";
+            if ($supplierId > 0) { $sqlPoByLokasi .= " AND po.supplier_id = ?"; }
+            $stmtLokasi = $boMainConn->prepare($sqlPoByLokasi);
+            if ($stmtLokasi) {
+                if ($supplierId > 0) {
+                    $stmtLokasi->bind_param('sssi', $start, $end, $lokasi['id'], $supplierId);
+                } else {
+                    $stmtLokasi->bind_param('sss', $start, $end, $lokasi['id']);
+                }
+                $stmtLokasi->execute();
+                $tmp_rLokasi = $stmtLokasi->get_result();
+                $rLokasi = ($tmp_rLokasi && $tmp_rLokasi instanceof mysqli_result) ? $tmp_rLokasi->fetch_assoc() : null;
+                $poByLocation[$lokasi['id']]['count'] = (int)($rLokasi['item_count'] ?? 0);
+                $poByLocation[$lokasi['id']]['total_value'] = (float)($rLokasi['total_value'] ?? 0);
+                $stmtLokasi->close();
+            }
+        }
+
+        // Calculate unmapped items (items without lokasi_mapping in PO)
+        $sqlUnmapped = "
+            SELECT COUNT(DISTINCT pod.id) AS item_count, COALESCE(SUM($poLineTotalExpr), 0) AS total_value
+            FROM purchase_order po
+            JOIN detail_purchase_order pod ON pod.purchase_order_id = po.id
+            WHERE po.tanggal BETWEEN ? AND ?
+              AND po.status NOT IN ('menunggu', 'draft', 'rejected')
+              AND $poDetailNotRejected
+              AND (pod.lokasi_mapping IS NULL OR pod.lokasi_mapping = '')
+        ";
+        if ($supplierId > 0) { $sqlUnmapped .= " AND po.supplier_id = ?"; }
+        $stmtUnmapped = $boMainConn->prepare($sqlUnmapped);
+        if ($stmtUnmapped) {
+            if ($supplierId > 0) {
+                $stmtUnmapped->bind_param('ssi', $start, $end, $supplierId);
+            } else {
+                $stmtUnmapped->bind_param('ss', $start, $end);
+            }
+            $stmtUnmapped->execute();
+            $tmp_rUnmapped = $stmtUnmapped->get_result();
+            $rUnmapped = ($tmp_rUnmapped && $tmp_rUnmapped instanceof mysqli_result) ? $tmp_rUnmapped->fetch_assoc() : null;
+            $poByLocation['unmapped'] = [
+                'nama_lokasi' => 'Unmapped',
+                'kode_lokasi' => '',
+                'count' => (int)($rUnmapped['item_count'] ?? 0),
+                'total_value' => (float)($rUnmapped['total_value'] ?? 0)
+            ];
+            $stmtUnmapped->close();
+        }
+
+        // Set Bar and Kitchen totals for backward compatibility (using total value)
+        foreach ($poByLocation as $lokasiId => $data) {
+            $namaLokasiLower = strtolower($data['nama_lokasi']);
+            if (strpos($namaLokasiLower, 'bar') !== false) {
+                $poBarTotal += $data['total_value'];
+            }
+            if (strpos($namaLokasiLower, 'kitchen') !== false || strpos($namaLokasiLower, 'dapur') !== false) {
+                $poKitchenTotal += $data['total_value'];
+            }
+        }
+    } else {
+        // Fallback jika tidak ada kolom lokasi_mapping di detail, cek lewat tabel barang / kitchen_bar_pos
+        $sqlPoBarKitchen = "
+            SELECT
+                COALESCE(SUM(CASE WHEN LOWER(COALESCE(b.kitchen_bar_pos, '')) LIKE '%bar%' THEN $poLineTotalExpr ELSE 0 END), 0) AS bar_total,
+                COALESCE(SUM(CASE WHEN (LOWER(COALESCE(b.kitchen_bar_pos, '')) LIKE '%kitchen%' OR LOWER(COALESCE(b.kitchen_bar_pos, '')) LIKE '%dapur%') THEN $poLineTotalExpr ELSE 0 END), 0) AS kitchen_total
+            FROM purchase_order po
+            JOIN detail_purchase_order pod ON pod.purchase_order_id = po.id
+            LEFT JOIN barang b ON b.id = pod.barang_id
+            WHERE po.tanggal BETWEEN ? AND ?
+              AND po.status NOT IN ('menunggu', 'draft', 'rejected')
+              AND $poDetailNotRejected
+        ";
+        if ($supplierId > 0) { $sqlPoBarKitchen .= " AND po.supplier_id = ?"; }
+        $stmtBK = $boMainConn->prepare($sqlPoBarKitchen);
+        if ($stmtBK) {
+            if ($supplierId > 0) { $stmtBK->bind_param('ssi', $start, $end, $supplierId); }
+            else { $stmtBK->bind_param('ss', $start, $end); }
+            $stmtBK->execute();
+            $tmp_rBK = $stmtBK->get_result();
+            $rBK = ($tmp_rBK && $tmp_rBK instanceof mysqli_result) ? $tmp_rBK->fetch_assoc() : null;
+            $poBarTotal = (float)($rBK['bar_total'] ?? 0);
+            $poKitchenTotal = (float)($rBK['kitchen_total'] ?? 0);
+            $stmtBK->close();
+        }
     }
 
     // 3. Nominal Direct Purchase
@@ -156,7 +279,8 @@ if ($boMainConn) {
             $stmt->bind_param('ss', $start, $end);
         }
         $stmt->execute();
-        $r = $stmt->get_result()->fetch_assoc();
+        $tmp_r = $stmt->get_result();
+        $r = ($tmp_r && $tmp_r instanceof mysqli_result) ? $tmp_r->fetch_assoc() : null;
         $sum['direct_purchase'] = (float)($r['t'] ?? 0);
         $stmt->close();
     }
@@ -173,7 +297,8 @@ if ($boMainConn) {
             if ($stmt) {
                 $stmt->bind_param('ss', $start, $end);
                 $stmt->execute();
-                $r = $stmt->get_result()->fetch_assoc();
+                $tmp_r = $stmt->get_result();
+                $r = ($tmp_r && $tmp_r instanceof mysqli_result) ? $tmp_r->fetch_assoc() : null;
                 $sum['pendapatan_omset'] += (float)($r['t'] ?? 0);
                 $stmt->close();
             }
@@ -183,7 +308,8 @@ if ($boMainConn) {
             if ($stmt) {
                 $stmt->bind_param('ss', $start, $end);
                 $stmt->execute();
-                $r = $stmt->get_result()->fetch_assoc();
+                $tmp_r = $stmt->get_result();
+                $r = ($tmp_r && $tmp_r instanceof mysqli_result) ? $tmp_r->fetch_assoc() : null;
                 $sum['pendapatan_omset'] += (float)($r['t'] ?? 0);
                 $stmt->close();
             }
@@ -217,13 +343,14 @@ if ($boMainConn) {
                 $stmt->bind_param('ss', $start, $end);
             }
             $stmt->execute();
-            $r = $stmt->get_result()->fetch_assoc();
+            $tmp_r = $stmt->get_result();
+            $r = ($tmp_r && $tmp_r instanceof mysqli_result) ? $tmp_r->fetch_assoc() : null;
             $sum['pemasukan_refund'] = (float)($r['t'] ?? 0);
             $stmt->close();
         }
     }
 
-    // QUERY LIST DATA TABEL PENGELUARAN (Menyingkirkan po.status = 'rejected' agar tidak tampil di tabel)
+    // QUERY LIST DATA TABEL PENGELUARAN
     $sqlPengeluaran = "
         SELECT tanggal, tipe, nomor, pihak, total_harga, keterangan, payment_method
         FROM (
@@ -336,7 +463,7 @@ if ($boMainConn) {
     }
 }
 
-// Data Top 5 Supplier (Menyingkirkan po.status = 'rejected')
+// Data Top 5 Supplier
 $sqlTopSupplier = "
 SELECT
     supplier_name,
@@ -454,7 +581,7 @@ if ($boMainConn) {
         'pengeluaran'
     );
 
-    // Diagram Bulanan (Menyingkirkan po.status = 'rejected')
+    // Diagram Bulanan
     $applyChartRows(
         "SELECT DATE_FORMAT(po.tanggal, '%Y-%m') AS periode_bulan, 
                 COALESCE(SUM($poLineTotalExpr), 0) AS total_nilai
@@ -552,7 +679,8 @@ if ($boMainConn) {
         if ($stmtPendapatanCashSaldo) {
             $stmtPendapatanCashSaldo->bind_param('ss', $start, $end);
             $stmtPendapatanCashSaldo->execute();
-            $r = $stmtPendapatanCashSaldo->get_result()->fetch_assoc();
+            $tmp_r = $stmtPendapatanCashSaldo->get_result();
+            $r = ($tmp_r && $tmp_r instanceof mysqli_result) ? $tmp_r->fetch_assoc() : null;
             $cash_pendapatan = (float)($r['total_cash'] ?? 0);
             $saldo_pendapatan = (float)($r['total_saldo'] ?? 0);
             $stmtPendapatanCashSaldo->close();
@@ -576,7 +704,8 @@ if ($boMainConn) {
             if ($stmtPendapatanCashSaldo2) {
                 $stmtPendapatanCashSaldo2->bind_param('ss', $start, $end);
                 $stmtPendapatanCashSaldo2->execute();
-                $r = $stmtPendapatanCashSaldo2->get_result()->fetch_assoc();
+                $tmp_r = $stmtPendapatanCashSaldo2->get_result();
+                $r = ($tmp_r && $tmp_r instanceof mysqli_result) ? $tmp_r->fetch_assoc() : null;
                 $cash_pendapatan += (float)($r['total_cash'] ?? 0);
                 $saldo_pendapatan += (float)($r['total_saldo'] ?? 0);
                 $stmtPendapatanCashSaldo2->close();
@@ -595,13 +724,14 @@ if ($boMainConn) {
     if ($stmtPengeluaranCashSaldo) {
         $stmtPengeluaranCashSaldo->bind_param('ss', $start, $end);
         $stmtPengeluaranCashSaldo->execute();
-        $r = $stmtPengeluaranCashSaldo->get_result()->fetch_assoc();
+        $tmp_r = $stmtPengeluaranCashSaldo->get_result();
+        $r = ($tmp_r && $tmp_r instanceof mysqli_result) ? $tmp_r->fetch_assoc() : null;
         $cash_pengeluaran += (float)($r['total_cash'] ?? 0);
         $saldo_pengeluaran += (float)($r['total_saldo'] ?? 0);
         $stmtPengeluaranCashSaldo->close();
     }
     
-    // Perhitungan sisa Cash/Saldo (Menyingkirkan po.status = 'rejected')
+    // Perhitungan sisa Cash/Saldo PO
     $sqlPOCashSaldo = "
         SELECT 
             COALESCE(SUM(CASE WHEN po.payment_method = 'cash' THEN $poLineTotalExpr ELSE 0 END), 0) as total_cash,
@@ -623,7 +753,8 @@ if ($boMainConn) {
             $stmtPOCashSaldo->bind_param('ss', $start, $end);
         }
         $stmtPOCashSaldo->execute();
-        $r = $stmtPOCashSaldo->get_result()->fetch_assoc();
+        $tmp_r = $stmtPOCashSaldo->get_result();
+        $r = ($tmp_r && $tmp_r instanceof mysqli_result) ? $tmp_r->fetch_assoc() : null;
         $cash_pengeluaran += (float)($r['total_cash'] ?? 0);
         $saldo_pengeluaran += (float)($r['total_saldo'] ?? 0);
         $stmtPOCashSaldo->close();
@@ -645,7 +776,8 @@ if ($boMainConn) {
             $stmtDirectCashSaldo->bind_param('ss', $start, $end);
         }
         $stmtDirectCashSaldo->execute();
-        $r = $stmtDirectCashSaldo->get_result()->fetch_assoc();
+        $tmp_r = $stmtDirectCashSaldo->get_result();
+        $r = ($tmp_r && $tmp_r instanceof mysqli_result) ? $tmp_r->fetch_assoc() : null;
         $cash_pengeluaran += (float)($r['total_cash'] ?? 0);
         $saldo_pengeluaran += (float)($r['total_saldo'] ?? 0);
         $stmtDirectCashSaldo->close();
@@ -676,6 +808,10 @@ if ($wantsJson) {
                 'pemasukan' => $totalPemasukan,
                 'saldo' => $saldo,
                 'breakdown' => $sum,
+                'po_bar' => $poBarTotal,
+                'po_kitchen' => $poKitchenTotal,
+                'po_by_location' => $poByLocation,
+                'total_po_count' => array_sum(array_column($poByLocation, 'count')),
                 'sisa_cash' => $sisa_cash,
                 'sisa_saldo' => $sisa_saldo,
             ],
@@ -695,6 +831,13 @@ if ($export === 'xlsx') {
     $sheet[] = [];
     $sheet[] = ['Ringkasan Keuangan'];
     $sheet[] = ['Total Pengeluaran', (float)$totalPengeluaran];
+    $sheet[] = ['PO Bar', (float)$poBarTotal];
+    $sheet[] = ['PO Kitchen', (float)$poKitchenTotal];
+    if (!empty($poByLocation)) {
+        foreach ($poByLocation as $lokasiId => $data) {
+            $sheet[] = ['PO ' . $data['nama_lokasi'], (float)$data['total']];
+        }
+    }
     $sheet[] = ['Total Pendapatan / Omset', (float)$totalPemasukan];
     $sheet[] = ['Saldo Bersih Berjalan', (float)$saldo];
     $sheet[] = ['Sisa Cash', (float)$sisa_cash];
@@ -720,9 +863,20 @@ if ($export === 'xlsx') {
     bo_export_xlsx_download(bo_export_filename('Laporan_Keuangan', 'xlsx'), 'Laporan Keuangan', $sheet);
 }
 if ($export === 'pdf') {
+    $poBreakdownText = '';
+    if (!empty($poByLocation)) {
+        $poBreakdownParts = [];
+        foreach ($poByLocation as $lokasiId => $data) {
+            $poBreakdownParts[] = $data['nama_lokasi'] . ': Rp ' . number_format($data['total'], 0, ',', '.');
+        }
+        $poBreakdownText = ' (' . implode(' | ', $poBreakdownParts) . ')';
+    } else {
+        $poBreakdownText = ' (Bar: Rp ' . number_format($poBarTotal, 0, ',', '.') . ' | Kitchen: Rp ' . number_format($poKitchenTotal, 0, ',', '.') . ')';
+    }
+
     $sub = [
                 'Periode: ' . $start . ' s/d ' . $end,
-                'Pengeluaran: Rp ' . number_format($totalPengeluaran, 0, ',', '.') . ' • Pendapatan/Omset: Rp ' . number_format($totalPemasukan, 0, ',', '.') . ' • Saldo: Rp ' . number_format($saldo, 0, ',', '.'),
+                'Pengeluaran: Rp ' . number_format($totalPengeluaran, 0, ',', '.') . $poBreakdownText . ' • Pendapatan/Omset: Rp ' . number_format($totalPemasukan, 0, ',', '.') . ' • Saldo: Rp ' . number_format($saldo, 0, ',', '.'),
                 'Sisa Cash: Rp ' . number_format($sisa_cash, 0, ',', '.') . ' • Sisa Saldo: Rp ' . number_format($sisa_saldo, 0, ',', '.'),
             ];
 
@@ -796,78 +950,100 @@ bo_render_shell_start([
     'header_actions' => $headerActions,
 ]);
 ?>
+
+<!-- FILTER KEUANGAN SEJAJAR -->
 <div class="bo-card p-4 mb-4">
-    <div class="bo-card-header">
+    <div class="bo-card-header mb-3">
         <div>
             <h3 class="bo-card-title">Filter Analisis Keuangan</h3>
             <div class="bo-card-subtitle">Gunakan penyaringan triwulan atau tanggal kustom secara berkala.</div>
         </div>
     </div>
-    <form class="row g-3 align-items-end" method="get">
-        <div class="col-md-3">
-            <label class="form-label">Filter Triwulan</label>
-            <select name="quarter" class="form-select">
-                <?php foreach ($quarterOptions as $quarterValue => $quarterLabel): ?>
-                    <option value="<?= htmlspecialchars($quarterValue) ?>" <?= $quarter === $quarterValue ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($quarterLabel) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label">Tahun</label>
-            <select name="quarter_year" class="form-select">
-                <?php foreach ($quarterYearOptions as $year): ?>
-                    <option value="<?= (int)$year ?>" <?= ((int)$year === $quarterYear) ? 'selected' : '' ?>>
-                        <?= (int)$year ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">Tanggal Mulai</label>
-            <input type="date" name="start" class="form-control" value="<?= htmlspecialchars($start) ?>" required>
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">Tanggal Akhir</label>
-            <input type="date" name="end" class="form-control" value="<?= htmlspecialchars($end) ?>" required>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label">Supplier (opsional)</label>
-            <select name="supplier_id" class="form-select">
-                <option value="0">Semua Supplier</option>
-                <?php foreach ($suppliers as $s): ?>
-                    <option value="<?= (int)$s['id'] ?>" <?= ((int)$s['id'] === $supplierId) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($s['nama_supplier']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="col-md-8">
-            <div class="text-muted small">Data tanggal otomatis mengikuti filter triwulan yang Anda pilih saat tombol terapkan diklik.</div>
-        </div>
-        <div class="col-12 d-flex gap-2">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Terapkan</button>
-            <a class="btn btn-success" href="<?= htmlspecialchars(bo_url_for('reports/finance.php?' . http_build_query(array_merge($_GET, ['export' => 'xlsx'])))) ?>"><i class="bi bi-file-earmark-excel me-1"></i>Export XLSX</a>
-            <a class="btn btn-danger" href="<?= htmlspecialchars(bo_url_for('reports/finance.php?' . http_build_query(array_merge($_GET, ['export' => 'pdf'])))) ?>"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</a>
+    <form method="get">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Filter Triwulan</label>
+                <select name="quarter" class="form-select">
+                    <?php foreach ($quarterOptions as $quarterValue => $quarterLabel): ?>
+                        <option value="<?= htmlspecialchars($quarterValue) ?>" <?= $quarter === $quarterValue ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($quarterLabel) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Tahun</label>
+                <select name="quarter_year" class="form-select">
+                    <?php foreach ($quarterYearOptions as $year): ?>
+                        <option value="<?= (int)$year ?>" <?= ((int)$year === $quarterYear) ? 'selected' : '' ?>>
+                            <?= (int)$year ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Tanggal Mulai</label>
+                <input type="date" name="start" class="form-control" value="<?= htmlspecialchars($start) ?>" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Tanggal Akhir</label>
+                <input type="date" name="end" class="form-control" value="<?= htmlspecialchars($end) ?>" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Supplier (opsional)</label>
+                <select name="supplier_id" class="form-select">
+                    <option value="0">Semua Supplier</option>
+                    <?php foreach ($suppliers as $s): ?>
+                        <option value="<?= (int)$s['id'] ?>" <?= ((int)$s['id'] === $supplierId) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($s['nama_supplier']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-12 text-muted small">
+                Data tanggal otomatis mengikuti filter triwulan yang Anda pilih saat tombol terapkan diklik.
+            </div>
+            <div class="col-12 d-flex gap-2 pt-2">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Terapkan</button>
+                <a class="btn btn-success" href="<?= htmlspecialchars(bo_url_for('reports/finance.php?' . http_build_query(array_merge($_GET, ['export' => 'xlsx'])))) ?>"><i class="bi bi-file-earmark-excel me-1"></i>Export XLSX</a>
+                <a class="btn btn-danger" href="<?= htmlspecialchars(bo_url_for('reports/finance.php?' . http_build_query(array_merge($_GET, ['export' => 'pdf'])))) ?>"><i class="bi bi-file-earmark-pdf me-1"></i>Export PDF</a>
+            </div>
         </div>
     </form>
 </div>
 
+<!-- CARD SUMMARY SEJAJAR -->
 <div class="row g-3 mb-4">
+    <!-- Baris 1 Summary Card -->
     <div class="col-md-4">
-        <div class="bo-card p-4 bg-light-subtle">
+        <div class="bo-card p-4 bg-light-subtle h-100">
             <div class="text-muted small uppercase fw-bold">Total Pengeluaran</div>
             <div class="fw-bold text-danger fs-4 mt-1">Rp <?= number_format($totalPengeluaran, 0, ',', '.') ?></div>
             <div class="text-muted small mt-2 border-top pt-2">
-                PO: Rp <?= number_format($sum['po'], 0, ',', '.') ?><br>
+                PO Total: Rp <?= number_format($sum['po'], 0, ',', '.') ?><br>
                 Direct: Rp <?= number_format($sum['direct_purchase'], 0, ',', '.') ?><br>
                 Lainnya: Rp <?= number_format($sum['pengeluaran'], 0, ',', '.') ?>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="bo-card p-4 bg-light-subtle">
+        <div class="bo-card p-4 bg-light-subtle h-100">
+            <div class="text-muted small uppercase fw-bold">PO Per Lokasi</div>
+            <div class="fw-bold text-primary fs-4 mt-1"><?= array_sum(array_column($poByLocation, 'count')) ?> Item</div>
+            <div class="text-muted small mt-2 border-top pt-2">
+                <?php if (!empty($poByLocation)): ?>
+                    <?php foreach ($poByLocation as $lokasiId => $data): ?>
+                        <?= htmlspecialchars($data['nama_lokasi']) ?>: <strong><?= $data['count'] ?> Item</strong><br>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    PO Bar: <strong><?= $poBarTotal > 0 ? '1 Item' : '0 Item' ?></strong><br>
+                    PO Kitchen: <strong><?= $poKitchenTotal > 0 ? '1 Item' : '0 Item' ?></strong><br>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="bo-card p-4 bg-light-subtle h-100">
             <div class="text-muted small uppercase fw-bold">Total Pendapatan & Omset</div>
             <div class="fw-bold text-success fs-4 mt-1">Rp <?= number_format($totalPemasukan, 0, ',', '.') ?></div>
             <div class="text-muted small mt-2 border-top pt-2">
@@ -877,13 +1053,35 @@ bo_render_shell_start([
             </div>
         </div>
     </div>
+
+    <!-- Baris 2 Summary Card -->
     <div class="col-md-4">
-        <div class="bo-card p-4 bg-light-subtle">
-            <div class="text-muted small uppercase fw-bold">Margin</div>
+        <div class="bo-card p-4 bg-light-subtle h-100">
+            <div class="text-muted small uppercase fw-bold">Margin / Saldo Bersih</div>
             <div class="fw-bold fs-4 mt-1 <?= ($saldo < 0) ? 'text-danger' : 'text-primary' ?>">Rp <?= number_format($saldo, 0, ',', '.') ?></div>
             <div class="text-muted small mt-2 border-top pt-2">
                 Status Operasional:<br>
                 <strong><?= ($saldo < 0) ? 'Defisit Anggaran' : 'Surplus Anggaran' ?></strong>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="bo-card p-4 bg-light-subtle h-100">
+            <div class="text-muted small uppercase fw-bold">Sisa Cash</div>
+            <div class="fw-bold text-primary fs-4 mt-1">Rp <?= number_format($sisa_cash, 0, ',', '.') ?></div>
+            <div class="text-muted small mt-2 border-top pt-2">
+                Pendapatan Cash: Rp <?= number_format($cash_pendapatan, 0, ',', '.') ?><br>
+                Pengeluaran Cash: Rp <?= number_format($cash_pengeluaran, 0, ',', '.') ?>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="bo-card p-4 bg-light-subtle h-100">
+            <div class="text-muted small uppercase fw-bold">Sisa Saldo</div>
+            <div class="fw-bold text-success fs-4 mt-1">Rp <?= number_format($sisa_saldo, 0, ',', '.') ?></div>
+            <div class="text-muted small mt-2 border-top pt-2">
+                Pendapatan Saldo: Rp <?= number_format($saldo_pendapatan, 0, ',', '.') ?><br>
+                Pengeluaran Saldo: Rp <?= number_format($saldo_pengeluaran, 0, ',', '.') ?>
             </div>
         </div>
     </div>
@@ -1081,29 +1279,6 @@ bo_render_shell_start([
                         </div>
                     </div>
                 <?php endforeach; ?>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-3 mt-4">
-    <div class="col-md-6">
-        <div class="bo-card p-4 bg-light-subtle">
-            <div class="text-muted small uppercase fw-bold">Sisa Cash</div>
-            <div class="fw-bold text-primary fs-4 mt-1">Rp <?= number_format($sisa_cash, 0, ',', '.') ?></div>
-            <div class="text-muted small mt-2 border-top pt-2">
-                Pendapatan Cash: Rp <?= number_format($cash_pendapatan, 0, ',', '.') ?><br>
-                Pengeluaran Cash: Rp <?= number_format($cash_pengeluaran, 0, ',', '.') ?>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="bo-card p-4 bg-light-subtle">
-            <div class="text-muted small uppercase fw-bold">Sisa Saldo</div>
-            <div class="fw-bold text-success fs-4 mt-1">Rp <?= number_format($sisa_saldo, 0, ',', '.') ?></div>
-            <div class="text-muted small mt-2 border-top pt-2">
-                Pendapatan Saldo: Rp <?= number_format($saldo_pendapatan, 0, ',', '.') ?><br>
-                Pengeluaran Saldo: Rp <?= number_format($saldo_pengeluaran, 0, ',', '.') ?>
             </div>
         </div>
     </div>

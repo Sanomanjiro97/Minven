@@ -167,6 +167,19 @@ if ($stmt) {
             font-size: 0.875rem;
             letter-spacing: 0.05em;
         }
+
+        @media (max-width: 767.98px) {
+            .table-responsive.stok-masuk-table-wrap {
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior-x: contain;
+            }
+
+            .stok-masuk-table {
+                min-width: 820px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -225,8 +238,8 @@ if ($stmt) {
 
         <div class="card">
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
+                <div class="table-responsive stok-masuk-table-wrap">
+                    <table class="table table-striped stok-masuk-table">
                         <thead>
                             <tr>
                                 <th>No Transaksi</th>

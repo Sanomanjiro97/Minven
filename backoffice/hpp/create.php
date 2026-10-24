@@ -2,24 +2,93 @@
 require_once __DIR__ . '/../_init.php';
 bo_require_login();
 
-$barang_result = $boMainConn->query("SELECT id, kode_barang, nama_barang, harga_beli, harga_po FROM barang ORDER BY nama_barang");
+// 1. Ambil data master satuan untuk mapping satuan_id -> nama_satuan
+$satuan_map = [];
+$check_satuan_table = $boMainConn->query("SHOW TABLES LIKE 'satuan'");
+if ($check_satuan_table && $check_satuan_table->num_rows > 0) {
+    $get_satuan = $boMainConn->query("SELECT * FROM satuan");
+    if ($get_satuan) {
+        while ($s = $get_satuan->fetch_assoc()) {
+            $nama_s = $s['nama_satuan'] ?? $s['nama'] ?? $s['satuan'] ?? '';
+            if (!empty($s['id'])) {
+                $satuan_map[$s['id']] = $nama_s;
+            }
+        }
+    }
+}
+
+// 2. Query utama barang - Selalu mengambil harga_beli ter-update dari database barang
+$query_barang = "
+    SELECT 
+        b.id, 
+        b.kode_barang, 
+        b.nama_barang, 
+        b.harga_beli, 
+        b.satuan_id,
+        b.satuan AS satuan_text
+    FROM barang b
+    ORDER BY b.nama_barang
+";
+$barang_result = $boMainConn->query($query_barang);
 
 $last_hpp = $boMainConn->query("SELECT kode_hpp FROM hpp ORDER BY id DESC LIMIT 1");
 $new_kode = 'HPP-001';
-if ($last_hpp->num_rows > 0) {
+if ($last_hpp && $last_hpp->num_rows > 0) {
     $row = $last_hpp->fetch_assoc();
     $last_num = intval(str_replace('HPP-', '', $row['kode_hpp']));
     $new_kode = 'HPP-' . str_pad($last_num + 1, 3, '0', STR_PAD_LEFT);
 }
 
+// 2b. Ambil data gudang untuk dropdown
+$gudang_options = [];
+$gudang_result = $boMainConn->query("SELECT id, nama_gudang FROM gudang ORDER BY nama_gudang ASC");
+if ($gudang_result && $gudang_result->num_rows > 0) {
+    while ($g = $gudang_result->fetch_assoc()) {
+        $gudang_options[] = $g;
+    }
+}
+
 $headerActions = '<a class="btn btn-outline-secondary" href="' . htmlspecialchars(bo_url_for('hpp/index.php')) . '"><i class="bi bi-arrow-left me-1"></i>Kembali</a>';
+
+$extraHead = '
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<style>
+    .ts-dropdown .dropdown-input-wrap { padding: 6px 8px; }
+    .ts-dropdown .dropdown-input {
+        width: 100%; padding: 6px 12px; font-size: 0.875rem;
+        border: 1px solid #ced4da; border-radius: 4px; outline: none;
+    }
+    .ts-dropdown .dropdown-input:focus {
+        border-color: #86b7fe; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+</style>
+';
+
 bo_render_shell_start([
     'title' => 'Tambah HPP Baru - Backoffice',
     'page_title' => 'Tambah HPP Baru',
     'page_subtitle' => 'Buat data HPP baru dengan bahan baku dan biaya lainnya.',
     'active' => 'hpp',
     'header_actions' => $headerActions,
+    'extra_head' => $extraHead ?? ''
 ]);
+
+// Buat array data barang untuk dikirim ke Javascript
+$barang_list = [];
+if ($barang_result && $barang_result->num_rows > 0) {
+    while ($row = $barang_result->fetch_assoc()) {
+        $satuan_item = $satuan_map[$row['satuan_id']] ?? $row['satuan_text'] ?? 'pcs';
+        if (empty($satuan_item)) $satuan_item = 'pcs';
+
+        $barang_list[] = [
+            'id' => $row['id'],
+            'nama' => $row['nama_barang'],
+            'harga' => (float)$row['harga_beli'], // Mengambil harga_beli terbaru dari DB
+            'satuan' => $satuan_item
+        ];
+    }
+}
 ?>
 
 <div class="bo-card p-4">
@@ -31,61 +100,39 @@ bo_render_shell_start([
     </div>
     <form method="post" action="<?= htmlspecialchars(bo_url_for('hpp/process.php?action=save')) ?>" id="form_hpp">
         <div class="row g-3 mb-4">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="bo-form-label">Kode HPP</label>
                 <input type="text" class="form-control" name="kode_hpp" value="<?= htmlspecialchars($new_kode) ?>" readonly>
             </div>
-            <div class="col-md-5">
+            <div class="col-md-2">
+                <label class="bo-form-label">Gudang</label>
+                <select class="form-select" name="gudang_id" required>
+                    <?php foreach ($gudang_options as $g): ?>
+                        <option value="<?= (int)$g['id'] ?>"><?= htmlspecialchars($g['nama_gudang']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-4">
                 <label class="bo-form-label">Nama Menu</label>
                 <input type="text" class="form-control" name="nama_barang_hpp" required placeholder="Contoh: Es Kopi Susu">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-2">
+                <label class="bo-form-label">Status</label>
+                <select class="form-select" name="status">
+                    <option value="active" selected>Aktif</option>
+                    <option value="inactive">Tidak Aktif</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <label class="bo-form-label">Harga Jual</label>
-                <input type="text" class="form-control" name="harga_jual" id="harga_jual" required onkeyup="calculateTotals()">
+                <input type="text" class="form-control" name="harga_jual" id="harga_jual" required>
             </div>
         </div>
 
         <hr class="my-4">
         <h5 class="mb-3">Bahan Baku</h5>
-        <div id="bahan_baku_container">
-            <div class="row g-3 mb-3 bahan-baku-item" data-index="0">
-                <div class="col-md-4">
-                    <label class="bo-form-label">Bahan Baku</label>
-                    <select class="form-select select-barang" name="detail_bahan[0][barang_id]" onchange="getBarangDetail(this, 0)">
-                        <option value="">-- Pilih Bahan --</option>
-                        <?php 
-                        $barang_result->data_seek(0);
-                        while ($row = $barang_result->fetch_assoc()): 
-                        ?>
-                            <option value="<?= $row['id'] ?>" data-harga="<?= $row['harga_po'] > 0 ? $row['harga_po'] : $row['harga_beli'] ?>" data-satuan="pcs">
-                                <?= htmlspecialchars($row['nama_barang']) ?>
-                            </option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="bo-form-label">Harga Satuan</label>
-                    <input type="text" class="form-control harga-satuan" name="detail_bahan[0][harga_satuan]" readonly>
-                </div>
-                <div class="col-md-2">
-                    <label class="bo-form-label">Resep (Qty)</label>
-                    <input type="number" step="0.01" class="form-control qty" name="detail_bahan[0][qty]" onkeyup="calculateItemTotal(this, 0)">
-                </div>
-                <div class="col-md-1">
-                    <label class="bo-form-label">Satuan</label>
-                    <input type="text" class="form-control satuan" name="detail_bahan[0][satuan]" value="pcs" readonly>
-                </div>
-                <div class="col-md-2">
-                    <label class="bo-form-label">Total</label>
-                    <input type="text" class="form-control item-total" name="detail_bahan[0][total]" readonly>
-                </div>
-                <div class="col-md-1 d-flex align-items-end">
-                    <button type="button" class="btn btn-danger btn-remove-bahan" onclick="removeBahan(this)">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
+        <div id="bahan_baku_container"></div>
+        
         <button type="button" class="btn btn-primary mb-4" onclick="addBahan()">
             <i class="bi bi-plus-circle me-1"></i>Tambah Bahan
         </button>
@@ -121,48 +168,61 @@ bo_render_shell_start([
 
 <?php ob_start(); ?>
 <script>
-let bahanIndex = 1;
-
-<?php
-$barang_result->data_seek(0);
-$barang_list = [];
-while ($row = $barang_result->fetch_assoc()) {
-    $barang_list[] = [
-        'id' => $row['id'],
-        'nama' => $row['nama_barang'],
-        'harga' => $row['harga_po'] > 0 ? $row['harga_po'] : $row['harga_beli'],
-        'satuan' => 'pcs'
-    ];
-}
-?>
+let bahanIndex = 0;
 const barangData = <?= json_encode($barang_list) ?>;
 
 function formatNumber(num) {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    if (isNaN(num)) return '0';
+    return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 function unformatNumber(str) {
-    return parseFloat(str.replace(/\./g, '')) || 0;
+    if (!str) return 0;
+    return parseFloat(str.toString().replace(/\./g, '')) || 0;
 }
 
-function getBarangDetail(select, index) {
-    const barangId = select.value;
+function initSearchableSelect(selectElement, index) {
+    const ts = new TomSelect(selectElement, {
+        plugins: ['dropdown_input'],
+        create: false,
+        sortField: { field: "text", order: "asc" },
+        placeholder: "-- Pilih Bahan --",
+        allowEmptyOption: true,
+        onChange: function(value) {
+            getBarangDetailByVal(value, selectElement, index);
+        }
+    });
+
+    const inputSearch = ts.dropdown.querySelector('.dropdown-input');
+    if (inputSearch) {
+        inputSearch.placeholder = 'Ketik untuk mencari bahan...';
+    }
+}
+
+function getBarangDetailByVal(barangId, selectElement, index) {
     const barang = barangData.find(b => b.id == barangId);
-    const container = select.closest('.bahan-baku-item');
+    const container = selectElement.closest('.bahan-baku-item');
     
-    if (barang) {
+    if (barang && container) {
+        // Mengisi harga ter-update secara otomatis dari DB
         container.querySelector('.harga-satuan').value = formatNumber(barang.harga);
         container.querySelector('.satuan').value = barang.satuan;
         calculateItemTotal(container.querySelector('.qty'), index);
+    } else if (container) {
+        container.querySelector('.harga-satuan').value = '';
+        container.querySelector('.satuan').value = '';
+        container.querySelector('.item-total').value = '';
+        calculateTotals();
     }
 }
 
 function calculateItemTotal(input, index) {
     const container = input.closest('.bahan-baku-item');
     const harga = unformatNumber(container.querySelector('.harga-satuan').value);
-    const qty = parseFloat(input.value) || 0;
+    const qty = parseFloat(container.querySelector('.qty').value.replace(',', '.')) || 0;
     const total = harga * qty;
-    container.querySelector('.item-total').value = formatNumber(total.toFixed(0));
+    
+    container.querySelector('.item-total').value = formatNumber(total);
     calculateTotals();
 }
 
@@ -182,31 +242,56 @@ function calculateTotals() {
     const hargaJual = unformatNumber(document.getElementById('harga_jual').value);
     const profit = hargaJual - totalHPP;
     
-    document.getElementById('total_hpp_display').textContent = 'Rp ' + formatNumber(totalHPP.toFixed(0));
-    document.getElementById('profit_display').textContent = 'Rp ' + formatNumber(profit.toFixed(0));
+    document.getElementById('total_hpp_display').textContent = 'Rp ' + formatNumber(totalHPP);
+    document.getElementById('profit_display').textContent = 'Rp ' + formatNumber(profit);
 }
 
 function addBahan() {
     const container = document.getElementById('bahan_baku_container');
-    const newItem = container.querySelector('.bahan-baku-item').cloneNode(true);
-    newItem.dataset.index = bahanIndex;
+    const currentIndex = bahanIndex;
     
-    newItem.innerHTML = newItem.innerHTML.replace(/\[0\]/g, `[${bahanIndex}]`);
-    newItem.querySelector('.harga-satuan').value = '';
-    newItem.querySelector('.qty').value = '';
-    newItem.querySelector('.item-total').value = '';
-    newItem.querySelector('.satuan').value = 'pcs';
-    
-    const select = newItem.querySelector('.select-barang');
-    select.onchange = function() {
-        getBarangDetail(this, bahanIndex);
-    };
-    
-    newItem.querySelector('.qty').onkeyup = function() {
-        calculateItemTotal(this, bahanIndex);
-    };
-    
-    container.appendChild(newItem);
+    let optionsHtml = '<option value="">-- Pilih Bahan --</option>';
+    barangData.forEach(item => {
+        optionsHtml += `<option value="${item.id}">${item.nama}</option>`;
+    });
+
+    const div = document.createElement('div');
+    div.className = 'row g-3 mb-3 bahan-baku-item';
+    div.dataset.index = currentIndex;
+
+    // Keterangan: 'harga-satuan' kembali dikunci menggunakan atribut 'readonly'
+    div.innerHTML = `
+        <div class="col-md-4">
+            <label class="bo-form-label">Bahan Baku</label>
+            <select class="form-select select-barang" name="detail_bahan[${currentIndex}][barang_id]">
+                ${optionsHtml}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="bo-form-label">Harga Satuan</label>
+            <input type="text" class="form-control harga-satuan" name="detail_bahan[${currentIndex}][harga_satuan]" readonly>
+        </div>
+        <div class="col-md-2">
+            <label class="bo-form-label">Resep (Qty)</label>
+            <input type="text" inputmode="decimal" class="form-control qty" name="detail_bahan[${currentIndex}][qty]" oninput="calculateItemTotal(this, ${currentIndex})">
+        </div>
+        <div class="col-md-1">
+            <label class="bo-form-label">Satuan</label>
+            <input type="text" class="form-control satuan" name="detail_bahan[${currentIndex}][satuan]" readonly>
+        </div>
+        <div class="col-md-2">
+            <label class="bo-form-label">Total</label>
+            <input type="text" class="form-control item-total" name="detail_bahan[${currentIndex}][total]" readonly>
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+            <button type="button" class="btn btn-danger btn-remove-bahan" onclick="removeBahan(this)">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+
+    container.appendChild(div);
+    initSearchableSelect(div.querySelector('.select-barang'), currentIndex);
     bahanIndex++;
 }
 
@@ -231,7 +316,7 @@ function addBiaya() {
         </div>
         <div class="col-md-4">
             <label class="bo-form-label">Nominal</label>
-            <input type="text" class="form-control nominal-biaya" name="detail_biaya[${index}][nominal]" onkeyup="calculateTotals()">
+            <input type="text" class="form-control nominal-biaya" name="detail_biaya[${index}][nominal]" onkeyup="this.value = formatNumber(unformatNumber(this.value)); calculateTotals();">
         </div>
         <div class="col-md-3 d-flex align-items-end">
             <button type="button" class="btn btn-danger" onclick="this.closest('.biaya-item').remove(); calculateTotals();">
@@ -242,9 +327,13 @@ function addBiaya() {
     container.appendChild(div);
 }
 
-document.getElementById('harga_jual').addEventListener('keyup', function() {
-    this.value = formatNumber(unformatNumber(this.value));
-    calculateTotals();
+document.addEventListener('DOMContentLoaded', function() {
+    addBahan();
+
+    document.getElementById('harga_jual').addEventListener('keyup', function() {
+        this.value = formatNumber(unformatNumber(this.value));
+        calculateTotals();
+    });
 });
 </script>
 <?php $pageScripts = ob_get_clean(); ?>

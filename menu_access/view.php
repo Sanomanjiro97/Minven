@@ -28,6 +28,12 @@ $sql = "SELECT ma.*, r.nama_role
         FROM menu_access ma 
         INNER JOIN roles r ON ma.role_id = r.id 
         WHERE ma.id = ?";
+global $conn;
+if (!$conn) {
+    $_SESSION['error'] = "Koneksi database tidak tersedia!";
+    header("Location: index.php");
+    exit();
+}
 $stmt = $conn->prepare($sql);
 $stmt->bind_param('i', $id);
 $stmt->execute();
@@ -65,6 +71,7 @@ $menu_names = [
     'laporan_stok' => 'Laporan Stok',
     'laporan_pembelian' => 'Laporan Pembelian',
     'laporan_transfer' => 'Laporan Transfer',
+    'cashier' => 'Kasir POS',
     'user' => 'Manajemen User',
     'menu_access' => 'Menu Access Management',
     'setup' => 'Setup',
@@ -73,6 +80,8 @@ $menu_names = [
 ];
 
 $menu_display_name = $menu_names[$menu_access['menu_name']] ?? $menu_access['menu_name'];
+// Ensure database connection variable is in scope and check for can_complete column existence
+global $conn;
 $has_can_complete = db_has_column($conn, 'menu_access', 'can_complete');
 $has_can_setup_split = db_has_column($conn, 'menu_access', 'can_setup_split');
 $menu_access['can_complete'] = $menu_access['can_complete'] ?? 0;

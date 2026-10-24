@@ -246,10 +246,14 @@ function getData($conn, $table, $gudang_id = '') {
     $stmt = $conn->prepare($sql);
     if ($stmt) {
         $stmt->bind_param($types, ...$params);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+        }
         $result = $stmt->get_result();
-        while ($row = $result->fetch_assoc()) {
-            $data[(int)$row['barang_id']] = (float)$row['total'];
+        if ($result && $result instanceof mysqli_result) {
+            while ($row = $result->fetch_assoc()) {
+                $data[(int)$row['barang_id']] = (float)$row['total'];
+            }
         }
         $stmt->close();
     }

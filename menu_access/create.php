@@ -56,6 +56,7 @@ $available_menus = [
     'laporan_stok' => 'Laporan Stok',
     'laporan_pembelian' => 'Laporan Pembelian',
     'laporan_transfer' => 'Laporan Transfer',
+    'cashier' => 'Kasir POS',
     'user' => 'Manajemen User',
     'menu_access' => 'Menu Access Management',
     'setup' => 'Setup',

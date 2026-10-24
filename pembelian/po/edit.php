@@ -97,7 +97,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $barang_ids = $_POST['barang_id'];
     $jumlah = $_POST['jumlah'];
     $keterangan_detail = $_POST['keterangan_detail'];
-    
+
+    // Get user's lokasi_id for automatic location assignment
+    $user_lokasi_id = null;
+    if (isset($_SESSION['user_id'])) {
+        $sql_user = "SELECT lokasi_id FROM users WHERE id = ?";
+        $stmt_user = $conn->prepare($sql_user);
+        if ($stmt_user) {
+            $stmt_user->bind_param('i', $_SESSION['user_id']);
+            $stmt_user->execute();
+            $result_user = $stmt_user->get_result();
+            if ($row_user = $result_user->fetch_assoc()) {
+                $user_lokasi_id = $row_user['lokasi_id'];
+            }
+            $stmt_user->close();
+        }
+    }
+
     // Hitung total item
     $total_item = array_sum($jumlah);
     
@@ -116,16 +132,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute();
         
         // Insert detail PO baru
-        $sql = "INSERT INTO detail_purchase_order (purchase_order_id, barang_id, jumlah, harga_satuan, keterangan) 
-                VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO detail_purchase_order (purchase_order_id, barang_id, jumlah, harga_satuan, keterangan, lokasi_mapping)
+                VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        
+
         foreach ($barang_ids as $key => $barang_id) {
             if ($jumlah[$key] > 0) {
                 // Bersihkan format Rupiah dari harga_satuan
                 $harga_bersih = str_replace(['Rp ', '.', ','], ['', '', '.'], $_POST['harga_satuan'][$key]);
                 $harga = (float)$harga_bersih;
-                $stmt->bind_param('iiids', $id, $barang_id, $jumlah[$key], $harga, $keterangan_detail[$key]);
+                $lokasi_mapping = $user_lokasi_id; // Use user's lokasi_id automatically
+                $stmt->bind_param('iiidss', $id, $barang_id, $jumlah[$key], $harga, $keterangan_detail[$key], $lokasi_mapping);
                 $stmt->execute();
                 
                 $detail_id = $conn->insert_id;
@@ -356,9 +373,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     $sql_saved_konv = "SELECT * FROM conversi_po_detail WHERE detail_purchase_order_id = ?";
                                     $stmt_saved_konv = $conn->prepare($sql_saved_konv);
                                     $stmt_saved_konv->bind_param('i', $detail['id']);
-                                    $stmt_saved_konv->execute();
-                                    $saved_konv = $stmt_saved_konv->get_result()->fetch_assoc();
-                                    $stmt_saved_konv->close();
+                                    if (!$stmt_saved_konv->execute()) {
+                                        $stmt_saved_konv->close();
+                                        $saved_konv = null;
+                                    } else {
+                                        $res_konv = $stmt_saved_konv->get_result();
+                                        $saved_konv = ($res_konv && $res_konv instanceof mysqli_result) ? $res_konv->fetch_assoc() : null;
+                                        $stmt_saved_konv->close();
+                                    }
                                 ?>
                                 <tr>
                                     <td class="text-center fw-bold"><?= $row_number ?></td>
@@ -397,7 +419,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         <input type="text" name="total[]" class="form-control total fw-bold text-success" readonly>
                                     </td>
                                     <td>
-                                        <input type="text" name="keterangan_detail[]" class="form-control keterangan-detail" 
+                                        <input type="text" name="keterangan_detail[]" class="form-control keterangan-detail"
                                                value="<?= htmlspecialchars($detail['keterangan']) ?>" placeholder="Keterangan detail">
                                     </td>
                                     <td class="text-center">

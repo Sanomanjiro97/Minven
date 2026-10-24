@@ -34,40 +34,61 @@ function ensureMenuAccessWASendColumn() {
     static $done = false;
     if ($done) return;
     $done = true;
-    if (!$conn) return;
+    if (!$conn || !($conn instanceof mysqli) || $conn->connect_error) return;
 
-    $result = $conn->query("SHOW COLUMNS FROM menu_access LIKE 'can_send_wa'");
-    if ($result->num_rows == 0) {
-        $conn->query("ALTER TABLE menu_access ADD COLUMN can_send_wa TINYINT(1) NOT NULL DEFAULT 0");
+    $result = @$conn->query("SHOW COLUMNS FROM menu_access LIKE 'can_send_wa'");
+    if ($result && $result instanceof mysqli_result && $result->num_rows == 0) {
+        @$conn->query("ALTER TABLE menu_access ADD COLUMN can_send_wa TINYINT(1) NOT NULL DEFAULT 0");
     }
 }
 
 function checkAccess($menu_name, $action = 'view') {
-    $conn = auth_db_conn();
-    
-    if (!isset($_SESSION['user_id']) || !isset($_SESSION['role_id'])) {
+    $conn = function_exists('resolve_user_db_conn') ? resolve_user_db_conn() : auth_db_conn();
+    if (!$conn) {
+        $conn = auth_db_conn();
+    }
+
+    $sessionUserId = $_SESSION['user_id'] ?? $_SESSION['kasir_user_id'] ?? 0;
+    $sessionRoleId = $_SESSION['role_id'] ?? $_SESSION['kasir_role_id'] ?? 0;
+
+    if ((int)$sessionUserId <= 0 || (int)$sessionRoleId <= 0) {
         return false;
     }
 
-    if ((int)$_SESSION['role_id'] === 1) {
+    if ((int)$sessionRoleId === 1) {
         return true;
+    }
+
+    if (!$conn || !($conn instanceof mysqli) || $conn->connect_error) {
+        return false;
     }
     
     // Get user roles from user_roles table
     $sql = "SELECT role_id FROM user_roles WHERE user_id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('i', $_SESSION['user_id']);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $role_ids = [];
-    while ($row = $result->fetch_assoc()) {
-        $role_ids[] = $row['role_id'];
+    if (!$stmt) {
+        $role_ids = [(int)$sessionRoleId];
+    } else {
+        $stmt->bind_param('i', $sessionUserId);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            $role_ids = [(int)$sessionRoleId];
+        } else {
+            $result = $stmt->get_result();
+
+            $role_ids = [];
+            if ($result && $result instanceof mysqli_result) {
+                while ($row = $result->fetch_assoc()) {
+                    $role_ids[] = (int)$row['role_id'];
+                }
+            }
+            $stmt->close();
+        }
     }
-    
+
     // If no roles found, check single role_id from session
     if (empty($role_ids)) {
-        $role_ids = [$_SESSION['role_id']];
+        $role_ids = [(int)$sessionRoleId];
     }
     
     // Check access for any of the user's roles
@@ -75,43 +96,55 @@ function checkAccess($menu_name, $action = 'view') {
         if ((int)$role_id === 1) {
             return true;
         }
-        $sql = "SELECT * FROM menu_access WHERE role_id = ? AND menu_name = ?";
+        // Normalize menu name comparison to be case-insensitive and ignore spaces/dashes
+        $norm = strtolower(trim($menu_name));
+        $norm2 = str_replace([' ', '-'], '_', $norm);
+        $sql = "SELECT * FROM menu_access WHERE role_id = ? AND (LOWER(TRIM(menu_name)) = ? OR LOWER(REPLACE(REPLACE(TRIM(menu_name),' ', '_'), '-', '_')) = ?) LIMIT 1";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('is', $role_id, $menu_name);
-        $stmt->execute();
+        if (!$stmt) continue;
+        $stmt->bind_param('iss', $role_id, $norm, $norm2);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            continue;
+        }
         $access_result = $stmt->get_result();
         
-        if ($access_result->num_rows > 0) {
+        if ($access_result && $access_result instanceof mysqli_result && $access_result->num_rows > 0) {
             $access = $access_result->fetch_assoc();
             
             switch ($action) {
                 case 'view':
-                    if ($access['can_view'] == 1) return true;
+                    if ($access['can_view'] == 1) { $stmt->close(); return true; }
                     break;
                 case 'add':
-                    if ($access['can_add'] == 1) return true;
+                    if ($access['can_add'] == 1) { $stmt->close(); return true; }
                     break;
                 case 'edit':
-                    if ($access['can_edit'] == 1) return true;
+                    if ($access['can_edit'] == 1) { $stmt->close(); return true; }
                     break;
                 case 'delete':
-                    if ($access['can_delete'] == 1) return true;
+                    if ($access['can_delete'] == 1) { $stmt->close(); return true; }
                     break;
                 case 'setup_split':
                     ensureMenuAccessSetupSplitColumn();
-                    if (isset($access['can_setup_split']) && $access['can_setup_split'] == 1) return true;
+                    if (isset($access['can_setup_split']) && $access['can_setup_split'] == 1) { $stmt->close(); return true; }
                     break;
                 case 'complete':
-                    if (isset($access['can_complete']) && $access['can_complete'] == 1) return true;
+                    if (isset($access['can_complete']) && $access['can_complete'] == 1) { $stmt->close(); return true; }
                     break;
                 case 'send_wa':
                     ensureMenuAccessWASendColumn();
-                    if (isset($access['can_send_wa']) && $access['can_send_wa'] == 1) return true;
+                    if (isset($access['can_send_wa']) && $access['can_send_wa'] == 1) { $stmt->close(); return true; }
+                    $stmt->close();
                     if (checkAccess('get_wa', 'view')) return true;
                     break;
                 default:
+                    $stmt->close();
                     return false;
             }
+        }
+        if (isset($stmt) && $stmt instanceof mysqli_stmt) {
+            $stmt->close();
         }
     }
     
@@ -132,34 +165,56 @@ function hasAccess($menu_name, $action = 'view') {
 
 function check_menu_access($conn, $role_ids, $menu_name, $permission = 'can_view') {
     if (empty($role_ids)) return false;
+    if (!$conn || !($conn instanceof mysqli) || $conn->connect_error) return false;
     $allowed_permissions = ['can_view', 'can_add', 'can_edit', 'can_delete', 'can_complete'];
     if (!in_array($permission, $allowed_permissions, true)) return false;
     $role_ids = array_map('intval', $role_ids);
     $role_ids_str = implode(',', $role_ids);
-    $sql = "SELECT COUNT(*) as cnt FROM menu_access WHERE role_id IN ($role_ids_str) AND menu_name = ? AND $permission = 1";
+    // Normalize comparison: allow stored menu_name variants (spaces/dashes/case)
+    $norm = strtolower(trim($menu_name));
+    $norm2 = str_replace([' ', '-'], '_', $norm);
+    $sql = "SELECT COUNT(*) as cnt FROM menu_access WHERE role_id IN ($role_ids_str) AND ($permission = 1) AND (LOWER(TRIM(menu_name)) = ? OR LOWER(REPLACE(REPLACE(TRIM(menu_name),' ', '_'), '-', '_')) = ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('s', $menu_name);
-    $stmt->execute();
-    $result = $stmt->get_result()->fetch_assoc();
-    return $result['cnt'] > 0;
+    if (!$stmt) return false;
+    $stmt->bind_param('ss', $norm, $norm2);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        return false;
+    }
+    $result = $stmt->get_result();
+    if (!$result || !($result instanceof mysqli_result)) {
+        $stmt->close();
+        return false;
+    }
+    $row = $result->fetch_assoc();
+    $stmt->close();
+    return $row && isset($row['cnt']) && $row['cnt'] > 0;
 }
 
 // Function to get user roles
 function getUserRoles($user_id) {
     $conn = auth_db_conn();
+    if (!$conn || !($conn instanceof mysqli) || $conn->connect_error) return [];
     
     $sql = "SELECT r.id, r.nama_role FROM roles r 
             INNER JOIN user_roles ur ON r.id = ur.role_id 
             WHERE ur.user_id = ?";
     $stmt = $conn->prepare($sql);
+    if (!$stmt) return [];
     $stmt->bind_param('i', $user_id);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        $stmt->close();
+        return [];
+    }
     $result = $stmt->get_result();
     
     $roles = [];
-    while ($row = $result->fetch_assoc()) {
-        $roles[] = $row;
+    if ($result && $result instanceof mysqli_result) {
+        while ($row = $result->fetch_assoc()) {
+            $roles[] = $row;
+        }
     }
+    $stmt->close();
     
     return $roles;
 }

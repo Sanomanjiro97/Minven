@@ -16,8 +16,15 @@ $sql = "SELECT ts.*, g.nama_gudang
         WHERE ts.id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $id);
-$stmt->execute();
-$header = $stmt->get_result()->fetch_assoc();
+if (!$stmt->execute()) {
+    $stmt->close();
+    $_SESSION['error'] = "Error executing query: " . $stmt->error;
+    header("Location: index.php");
+    exit();
+}
+$res = $stmt->get_result();
+$header = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+$stmt->close();
 
 if (!$header) {
     $_SESSION['error'] = "Transaksi tidak ditemukan!";

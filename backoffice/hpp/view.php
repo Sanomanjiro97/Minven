@@ -3,7 +3,8 @@ require_once __DIR__ . '/../_init.php';
 bo_require_login();
 
 $id = intval($_GET['id']);
-$hpp = $boMainConn->query("SELECT h.*, u.nama as created_by_name FROM hpp h LEFT JOIN users u ON h.created_by = u.id WHERE h.id = $id")->fetch_assoc();
+$res = $boMainConn->query("SELECT h.*, u.nama as created_by_name FROM hpp h LEFT JOIN users u ON h.created_by = u.id WHERE h.id = $id");
+$hpp = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
 if (!$hpp) {
     header('Location: ' . bo_url_for('hpp/index.php'));
     exit;
@@ -67,7 +68,7 @@ bo_render_shell_start([
                     <tr>
                         <td><?= $no++ ?></td>
                         <td><?= htmlspecialchars($row['nama_barang'] ?? 'Unknown') ?></td>
-                        <td><?= $row['qty'] ?></td>
+                        <td><?= htmlspecialchars(rtrim(rtrim(number_format((float)$row['qty'], 2, ',', '.'), '0'), ',')) ?></td>
                         <td><?= htmlspecialchars($row['satuan']) ?></td>
                         <td>Rp <?= number_format($row['harga_satuan'], 0, ',', '.') ?></td>
                         <td>Rp <?= number_format($row['total'], 0, ',', '.') ?></td>

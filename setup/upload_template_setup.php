@@ -140,9 +140,11 @@ $activeFiles = [
     'logo' => null
 ];
 $result = $conn->query("SELECT * FROM setup_file_template WHERE is_active = 1 ORDER BY uploaded_at DESC");
-while ($row = $result->fetch_assoc()) {
-    if (isset($activeFiles[$row['kategori']]) && $activeFiles[$row['kategori']] === null) {
-        $activeFiles[$row['kategori']] = $row;
+if ($result && $result instanceof mysqli_result) {
+    while ($row = $result->fetch_assoc()) {
+        if (isset($activeFiles[$row['kategori']]) && $activeFiles[$row['kategori']] === null) {
+            $activeFiles[$row['kategori']] = $row;
+        }
     }
 }
 ?>

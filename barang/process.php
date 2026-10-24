@@ -3,11 +3,17 @@ session_start();
 require_once '../config.php';
 require_once '../includes/access_check.php';
 
+/** @var mysqli $conn */
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../index.php");
     exit();
 }
 
+/**
+ * @param mysqli $conn
+ * @return bool
+ */
 function ensure_barang_split_setup_table($conn) {
     $res = $conn->query("SHOW TABLES LIKE 'barang_split_setup'");
     if ($res instanceof mysqli_result) {
@@ -29,6 +35,114 @@ function ensure_barang_split_setup_table($conn) {
         KEY idx_split (split_barang_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
     return $conn->query($sql) === true;
+}
+
+if (!function_exists('hpp_recalculate_by_barang')) {
+    /**
+     * @param mysqli $conn
+     * @param int $barangId
+     * @return array{success: bool, message?: string, updated_count?: int}
+     */
+    function hpp_recalculate_by_barang($conn, $barangId) {
+        try {
+            $barangId = (int)$barangId;
+            if ($barangId <= 0) {
+                return ['success' => false, 'message' => 'ID barang tidak valid'];
+            }
+
+            $sqlGetBarang = "SELECT harga_beli FROM barang WHERE id = ?";
+            $stmtBarang = $conn->prepare($sqlGetBarang);
+            if (!$stmtBarang) {
+                throw new Exception($conn->error);
+            }
+            $stmtBarang->bind_param('i', $barangId);
+            $stmtBarang->execute();
+            $resBarang = $stmtBarang->get_result();
+            $dataBarang = $resBarang ? $resBarang->fetch_assoc() : null;
+            $stmtBarang->close();
+
+            if (!$dataBarang) {
+                return ['success' => false, 'message' => 'Barang tidak ditemukan'];
+            }
+
+            $hargaSatuan = (float)$dataBarang['harga_beli'];
+
+            $conn->begin_transaction();
+
+            $stmtGetHpp = $conn->prepare("SELECT DISTINCT hpp_id FROM hpp_detail_bahan WHERE barang_id = ?");
+            if (!$stmtGetHpp) {
+                throw new Exception($conn->error);
+            }
+            $stmtGetHpp->bind_param('i', $barangId);
+            $stmtGetHpp->execute();
+            $resHpp = $stmtGetHpp->get_result();
+            $hppIds = [];
+            while ($resHpp && ($r = $resHpp->fetch_assoc())) {
+                $hppIds[] = (int)$r['hpp_id'];
+            }
+            $stmtGetHpp->close();
+
+            if (empty($hppIds)) {
+                $conn->commit();
+                return ['success' => true, 'updated_count' => 0];
+            }
+
+            $stmtUpdateDetail = $conn->prepare("UPDATE hpp_detail_bahan SET harga_satuan = ?, total = qty * ? WHERE hpp_id = ? AND barang_id = ?");
+            if (!$stmtUpdateDetail) {
+                throw new Exception($conn->error);
+            }
+
+            $updatedCount = 0;
+            foreach ($hppIds as $hppId) {
+                $stmtUpdateDetail->bind_param('ddii', $hargaSatuan, $hargaSatuan, $hppId, $barangId);
+                $stmtUpdateDetail->execute();
+                $updatedCount++;
+            }
+            $stmtUpdateDetail->close();
+
+            $stmtRecalcHpp = $conn->prepare("SELECT id, harga_jual FROM hpp WHERE id = ?");
+            $stmtUpdateHpp = $conn->prepare("UPDATE hpp SET hpp_total = ?, profit = ?, persentase_profit = ?, updated_at = NOW() WHERE id = ?");
+            if (!$stmtRecalcHpp || !$stmtUpdateHpp) {
+                throw new Exception($conn->error);
+            }
+
+            foreach ($hppIds as $hppId) {
+                $stmtRecalcHpp->bind_param('i', $hppId);
+                $stmtRecalcHpp->execute();
+                $resH = $stmtRecalcHpp->get_result();
+                $hppRow = $resH ? $resH->fetch_assoc() : null;
+                $stmtRecalcHpp->free_result();
+                if (!$hppRow) continue;
+
+                $hargaJual = (float)$hppRow['harga_jual'];
+
+                $sqlSum = $conn->query("SELECT COALESCE(SUM(total), 0) AS total_bahan FROM hpp_detail_bahan WHERE hpp_id = " . (int)$hppId);
+                $sumRow = $sqlSum ? $sqlSum->fetch_assoc() : ['total_bahan' => 0];
+                $sqlSum->free();
+
+                $sqlSumBiaya = $conn->query("SELECT COALESCE(SUM(nominal), 0) AS total_biaya FROM hpp_detail_biaya WHERE hpp_id = " . (int)$hppId);
+                $sumBiayaRow = $sqlSumBiaya ? $sqlSumBiaya->fetch_assoc() : ['total_biaya' => 0];
+                $sqlSumBiaya->free();
+
+                $hppTotal = (float)$sumRow['total_bahan'] + (float)$sumBiayaRow['total_biaya'];
+                $profit = $hargaJual - $hppTotal;
+                $persentase = $hargaJual > 0 ? ($profit / $hargaJual) * 100 : 0;
+
+                $stmtUpdateHpp->bind_param('dddi', $hppTotal, $profit, $persentase, $hppId);
+                $stmtUpdateHpp->execute();
+            }
+            $stmtRecalcHpp->close();
+            $stmtUpdateHpp->close();
+
+            $conn->commit();
+            return ['success' => true, 'updated_count' => $updatedCount];
+        } catch (Exception $e) {
+            if (isset($conn) && $conn instanceof mysqli) {
+                try { $conn->rollback(); } catch (Exception $e2) {}
+            }
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
 }
 
 $action = '';
@@ -194,7 +308,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_split_setup') {
     }
 }
 
+/**
+ * @param mixed $data
+ * @return string
+ */
 function clean_input($data) {
+    /** @var mysqli $conn */
     global $conn;
     $data = trim($data);
     $data = stripslashes($data);
@@ -202,6 +321,10 @@ function clean_input($data) {
     return $conn->real_escape_string($data);
 }
 
+/**
+ * @param array $file
+ * @return string|false
+ */
 function upload_image($file) {
     $target_dir = "../uploads/barang/";
     if (!file_exists($target_dir)) {
@@ -235,6 +358,10 @@ function upload_image($file) {
     return false;
 }
 
+/**
+ * @param mysqli $conn
+ * @return bool
+ */
 function ensure_barang_barcode_dus_column($conn) {
     if (db_has_column($conn, 'barang', 'barcode_dus')) {
         return true;
@@ -413,7 +540,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_POST['action'] == 'edit') {
         }
 
         // Hapus gambar lama
-        $old_image = $conn->query("SELECT gambar FROM barang WHERE id = $id")->fetch_assoc();
+        $res = $conn->query("SELECT gambar FROM barang WHERE id = $id");
+        $old_image = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
         if($old_image['gambar']) {
             @unlink("../uploads/barang/" . $old_image['gambar']);
         }
@@ -504,6 +632,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_POST['action'] == 'edit') {
 
     if ($stmt->execute()) {
         $_SESSION['success'] = "Barang berhasil diupdate!";
+
+        $updated = hpp_recalculate_by_barang($conn, $id_i);
+        if (!empty($updated['success']) && isset($updated['updated_count']) && $updated['updated_count'] > 0) {
+            $_SESSION['success'] .= " HPP terkait berhasil diupdate (" . $updated['updated_count'] . " data).";
+        } elseif (empty($updated['success']) && !empty($updated['message'])) {
+            $_SESSION['error'] = "Update barang berhasil, namun HPP gagal diupdate: " . $updated['message'];
+        }
     } else {
         $_SESSION['error'] = "Gagal mengupdate barang!";
     }
@@ -552,7 +687,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['action']) && $_GET['acti
     }
 
     // Hapus gambar jika ada
-    $old_image = $conn->query("SELECT gambar FROM barang WHERE id = $id")->fetch_assoc();
+    $res = $conn->query("SELECT gambar FROM barang WHERE id = $id");
+    $old_image = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
     if($old_image['gambar'] && file_exists("../uploads/barang/" . $old_image['gambar'])) {
         @unlink("../uploads/barang/" . $old_image['gambar']);
     }

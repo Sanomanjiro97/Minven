@@ -22,7 +22,13 @@ function checkAccessDirect($menu_name, $action = 'view') {
     // Simplified access check for AJAX requests
     $role_id = $_SESSION['role_id'];
     $sql = "SELECT * FROM menu_access WHERE role_id = ? AND menu_name = ?";
+    if (!$conn) {
+        return false;
+    }
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        return false;
+    }
     $stmt->bind_param('is', $role_id, $menu_name);
     $stmt->execute();
     $result = $stmt->get_result();

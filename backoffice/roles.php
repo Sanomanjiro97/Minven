@@ -1,4 +1,7 @@
 <?php
+// Disable auto-fix menu access BEFORE loading config
+$GLOBALS['DISABLE_MENU_ACCESS_AUTO_FIX'] = true;
+
 require_once __DIR__ . '/_init.php';
 bo_require_login();
 
@@ -33,8 +36,11 @@ if (isset($_GET['action'], $_GET['id']) && $_GET['action'] === 'delete') {
         $stmt = $boAuthConn->prepare("SELECT COUNT(*) AS c FROM user_roles WHERE role_id = ?");
         if ($stmt) {
             $stmt->bind_param('i', $roleId);
-            $stmt->execute();
-            $row = $stmt->get_result()->fetch_assoc();
+            $row = null;
+            if ($stmt->execute()) {
+                $res = $stmt->get_result();
+                $row = ($res && $res instanceof mysqli_result) ? $res->fetch_assoc() : null;
+            }
             $stmt->close();
             if ((int)($row['c'] ?? 0) > 0) {
                 $error = 'Role tidak dapat dihapus karena sedang digunakan.';
