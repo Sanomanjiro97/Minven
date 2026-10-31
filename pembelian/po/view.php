@@ -48,6 +48,7 @@ $sql = "SELECT
             dpo.*, 
             b.kode_barang, 
             b.nama_barang, 
+        COALESCE(dpo.keterangan, '') as keterangan_safe,
         b.gambar,
         COALESCE(s_konv.nama_satuan, s.nama_satuan) as nama_satuan,
         (dpo.jumlah * dpo.harga_satuan) as subtotal
@@ -174,7 +175,7 @@ $wa_active = $wa_config && $wa_config['is_active'] == 1;
                 <button type="button" class="btn btn-outline-success ms-2 btn-send-wa" 
                         data-no-po="<?= htmlspecialchars($po['no_po']) ?>"
                           data-supplier="<?= htmlspecialchars($po['nama_supplier']) ?>"
-                          data-telepon="<?= htmlspecialchars($po['telepon_supplier']) ?>"
+                          data-telepon="<?= htmlspecialchars($po['telepon_supplier'] ?? '') ?>"
                           data-tanggal="<?= date('d/m/Y', strtotime($po['tanggal'])) ?>"
                           data-total="<?= formatRupiah($temp_total) ?>"
                           data-items="<?= htmlspecialchars($detail_items_str) ?>"
@@ -219,7 +220,7 @@ $wa_active = $wa_config && $wa_config['is_active'] == 1;
                             <dd class="col-sm-8"><?= htmlspecialchars($po['alamat_supplier']) ?></dd>
                             
                             <dt class="col-sm-4">Telepon</dt>
-                            <dd class="col-sm-8"><?= htmlspecialchars($po['telepon_supplier']) ?></dd>
+                            <dd class="col-sm-8"><?= htmlspecialchars($po['telepon_supplier'] ?? '') ?></dd>
 
                             <dt class="col-sm-4">Foto</dt>
                             <dd class="col-sm-8">
@@ -315,6 +316,12 @@ $wa_active = $wa_config && $wa_config['is_active'] == 1;
                             <?php if ($detail_result->num_rows > 0): ?>
                                 <?php while($detail = $detail_result->fetch_assoc()): ?>
                                 <?php 
+                                    $detailKeterangan = trim((string)($detail['keterangan_safe'] ?? ''));
+                                    $detailKeteranganPreview = strlen($detailKeterangan) > 50
+                                        ? substr($detailKeterangan, 0, 50) . '...'
+                                        : $detailKeterangan;
+                                    $detailKeteranganHtml = htmlspecialchars($detailKeterangan, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                                    $detailKeteranganPreviewHtml = htmlspecialchars($detailKeteranganPreview, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                                     // Only count items that are not rejected
                                     if ($detail['status'] !== 'rejected') {
                                         $total_item += $detail['jumlah'];
@@ -343,10 +350,8 @@ $wa_active = $wa_config && $wa_config['is_active'] == 1;
                                     <td><?= htmlspecialchars($detail['nama_satuan']) ?></td>
                                     <td class="text-end"><?= formatRupiah($detail['harga_satuan']) ?></td>
                                     <td class="text-end"><?= formatRupiah($detail['subtotal']) ?></td>
-                                    <td title="<?= htmlspecialchars($detail['keterangan']) ?>">
-                                        <?= strlen($detail['keterangan']) > 50 ? 
-                                            htmlspecialchars(substr($detail['keterangan'], 0, 50)) . '...' : 
-                                            htmlspecialchars($detail['keterangan']) ?>
+                                    <td<?php if ($detailKeterangan !== ''): ?> title="<?= $detailKeteranganHtml ?>"<?php endif; ?>>
+                                        <?= $detailKeteranganPreviewHtml ?>
                                     </td>
                                 </tr>
                                 <?php endwhile; ?>

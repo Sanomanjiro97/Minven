@@ -44,17 +44,19 @@ if (isset($_GET['error'])) { $pesan_error = htmlspecialchars($_GET['error']); }
 if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['type']) && isset($_GET['id'])) {
     $id_hapus = (int)$_GET['id'];
     $type = $_GET['type'];
-    
+    $start_filter = $_GET['start'] ?? date('Y-m-01');
+    $end_filter = $_GET['end'] ?? date('Y-m-t');
+
     if ($type === 'pendapatan') {
         $stmt = $db->prepare("DELETE FROM pendapatan_manual WHERE id = ?");
     } else {
         $stmt = $db->prepare("DELETE FROM pengeluaran WHERE id = ?");
     }
-    
+
     if ($stmt) {
         $stmt->bind_param('i', $id_hapus);
         if ($stmt->execute()) {
-            header("Location: transaksi.php?sukses=Data " . $type . " berhasil dihapus");
+            header("Location: transaksi.php?sukses=Data " . $type . " berhasil dihapus&start=" . urlencode($start_filter) . "&end=" . urlencode($end_filter));
             exit();
         } else {
             $pesan_error = "Gagal menghapus data: " . $stmt->error;
@@ -82,31 +84,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $gofood = (float)$_POST['total_gofood_gopay'];
     $ovo = (float)$_POST['total_ovo'];
 
+    // Get filter from POST or use default
+    $start_filter = $_POST['start'] ?? date('Y-m-01');
+    $end_filter = $_POST['end'] ?? date('Y-m-t');
+
     if ($id > 0) {
-        $stmt = $db->prepare("UPDATE pendapatan_manual SET 
-            tanggal = ?, total_omset_hari = ?, total_dine_in = ?, total_take_away = ?, total_online_order = ?, 
-            total_cash_sales = ?, total_qr_gopay = ?, total_edc = ?, total_online_payment = ?, total_transfers = ?, 
+        $stmt = $db->prepare("UPDATE pendapatan_manual SET
+            tanggal = ?, total_omset_hari = ?, total_dine_in = ?, total_take_away = ?, total_online_order = ?,
+            total_cash_sales = ?, total_qr_gopay = ?, total_edc = ?, total_online_payment = ?, total_transfers = ?,
             total_shopeefood = ?, total_gofood_gopay = ?, total_ovo = ? WHERE id = ?");
         if ($stmt) {
             $stmt->bind_param('sddddddddddddi', $tanggal, $total_omset, $dine_in, $take_away, $online_order, $cash, $qr_gopay, $edc, $online_pay, $transfer, $shopeefood, $gofood, $ovo, $id);
             if ($stmt->execute()) {
-                header("Location: transaksi.php?sukses=Data pendapatan berhasil diperbarui");
+                header("Location: transaksi.php?sukses=Data pendapatan berhasil diperbarui&start=" . urlencode($start_filter) . "&end=" . urlencode($end_filter));
                 exit();
             } else { $pesan_error = "Gagal memperbarui pendapatan: " . $stmt->error; }
             $stmt->close();
         }
     } else {
-        $stmt = $db->prepare("INSERT INTO pendapatan_manual 
-            (tanggal, total_omset_hari, total_dine_in, total_take_away, total_online_order, total_cash_sales, total_qr_gopay, total_edc, total_online_payment, total_transfers, total_shopeefood, total_gofood_gopay, total_ovo) 
+        $stmt = $db->prepare("INSERT INTO pendapatan_manual
+            (tanggal, total_omset_hari, total_dine_in, total_take_away, total_online_order, total_cash_sales, total_qr_gopay, total_edc, total_online_payment, total_transfers, total_shopeefood, total_gofood_gopay, total_ovo)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE 
+            ON DUPLICATE KEY UPDATE
             total_omset_hari = VALUES(total_omset_hari), total_dine_in = VALUES(total_dine_in), total_take_away = VALUES(total_take_away), total_online_order = VALUES(total_online_order),
             total_cash_sales = VALUES(total_cash_sales), total_qr_gopay = VALUES(total_qr_gopay), total_edc = VALUES(total_edc), total_online_payment = VALUES(total_online_payment),
             total_transfers = VALUES(total_transfers), total_shopeefood = VALUES(total_shopeefood), total_gofood_gopay = VALUES(total_gofood_gopay), total_ovo = VALUES(total_ovo)");
         if ($stmt) {
             $stmt->bind_param('sdddddddddddd', $tanggal, $total_omset, $dine_in, $take_away, $online_order, $cash, $qr_gopay, $edc, $online_pay, $transfer, $shopeefood, $gofood, $ovo);
             if ($stmt->execute()) {
-                header("Location: transaksi.php?sukses=Data pendapatan berhasil disimpan");
+                header("Location: transaksi.php?sukses=Data pendapatan berhasil disimpan&start=" . urlencode($start_filter) . "&end=" . urlencode($end_filter));
                 exit();
             } else { $pesan_error = "Gagal menyimpan pendapatan: " . $stmt->error; }
             $stmt->close();
@@ -124,8 +130,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $total_harga_raw = str_replace(['.', ','], ['', '.'], $_POST['total_harga'] ?? '0');
     $total_harga = floatval($total_harga_raw);
 
-    if ($deskripsi === '') { $pesan_error = 'Deskripsi pengeluaran harus diisi.'; } 
-    elseif ($total_harga <= 0) { $pesan_error = 'Total harga harus lebih dari 0.'; } 
+    // Get filter from POST or use default
+    $start_filter = $_POST['start'] ?? date('Y-m-01');
+    $end_filter = $_POST['end'] ?? date('Y-m-t');
+
+    if ($deskripsi === '') { $pesan_error = 'Deskripsi pengeluaran harus diisi.'; }
+    elseif ($total_harga <= 0) { $pesan_error = 'Total harga harus lebih dari 0.'; }
     else {
         $today = date('Y-m-d');
         $q = $db->query("SELECT COUNT(*) AS c FROM pengeluaran WHERE tanggal LIKE '$today%'");
@@ -141,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $stmt_detail->bind_param('isdd', $pengeluaran_id, $deskripsi, $total_harga, $total_harga);
                 $stmt_detail->execute();
                 $stmt_detail->close();
-                header("Location: transaksi.php?sukses=Pengeluaran berhasil ditambahkan!");
+                header("Location: transaksi.php?sukses=Pengeluaran berhasil ditambahkan!&start=" . urlencode($start_filter) . "&end=" . urlencode($end_filter));
                 exit();
             } else { $pesan_error = 'Gagal menyimpan pengeluaran: ' . $stmt->error; }
             $stmt->close();
@@ -152,31 +162,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // -------------------------------------------------------------------------
 // 4. AMBIL DATA RINGKASAN DASHBOARD BULAN INI (KONSOLIDASI)
 // -------------------------------------------------------------------------
+$start = (string)($_GET['start'] ?? date('Y-m-01'));
+$end = (string)($_GET['end'] ?? date('Y-m-t'));
+
 $bulan_ini = date('Y-m');
 $bulan_ini_sql = date('Y-m-01');
 $bulan_akhir_sql = date('Y-m-t');
 
 // Hitung Statistik Pendapatan
-$query_stats = $db->query("SELECT 
+$stmt_stats = $db->prepare("SELECT
     SUM(total_omset_hari) AS total_omset,
     SUM(total_cash_sales) AS total_cash,
     SUM(total_qr_gopay + total_edc + total_online_payment + total_transfers + total_shopeefood + total_gofood_gopay + total_ovo) AS total_saldo
-    FROM pendapatan_manual WHERE tanggal LIKE '$bulan_ini-%'");
-$stats = $query_stats ? $query_stats->fetch_assoc() : [];
-$stat_omset = (float)($stats['total_omset'] ?? 0);
-$stat_cash  = (float)($stats['total_cash'] ?? 0);
-$stat_saldo = (float)($stats['total_saldo'] ?? 0);
+    FROM pendapatan_manual WHERE tanggal BETWEEN ? AND ?");
+if ($stmt_stats) {
+    $stmt_stats->bind_param('ss', $start, $end);
+    $stmt_stats->execute();
+    $query_stats = $stmt_stats->get_result();
+    $stats = $query_stats ? $query_stats->fetch_assoc() : [];
+    $stat_omset = (float)($stats['total_omset'] ?? 0);
+    $stat_cash  = (float)($stats['total_cash'] ?? 0);
+    $stat_saldo = (float)($stats['total_saldo'] ?? 0);
+    $stmt_stats->close();
+} else {
+    $stat_omset = 0;
+    $stat_cash = 0;
+    $stat_saldo = 0;
+}
 
 // Hitung Statistik Pengeluaran
-$query_pengeluaran = $db->query("SELECT 
+$stmt_pengeluaran = $db->prepare("SELECT
     SUM(CASE WHEN payment_method = 'cash' THEN total_harga ELSE 0 END) AS total_pengeluaran_cash,
     SUM(CASE WHEN payment_method = 'saldo' THEN total_harga ELSE 0 END) AS total_pengeluaran_saldo,
     SUM(total_harga) AS total_semua_pengeluaran
-    FROM pengeluaran WHERE tanggal BETWEEN '$bulan_ini_sql' AND '$bulan_akhir_sql'");
-$pengeluaran_stats = $query_pengeluaran ? $query_pengeluaran->fetch_assoc() : [];
-$total_pengeluaran_cash = (float)($pengeluaran_stats['total_pengeluaran_cash'] ?? 0);
-$total_pengeluaran_saldo = (float)($pengeluaran_stats['total_pengeluaran_saldo'] ?? 0);
-$total_semua_pengeluaran = (float)($pengeluaran_stats['total_semua_pengeluaran'] ?? 0);
+    FROM pengeluaran WHERE tanggal BETWEEN ? AND ?");
+if ($stmt_pengeluaran) {
+    $stmt_pengeluaran->bind_param('ss', $start, $end);
+    $stmt_pengeluaran->execute();
+    $query_pengeluaran = $stmt_pengeluaran->get_result();
+    $pengeluaran_stats = $query_pengeluaran ? $query_pengeluaran->fetch_assoc() : [];
+    $total_pengeluaran_cash = (float)($pengeluaran_stats['total_pengeluaran_cash'] ?? 0);
+    $total_pengeluaran_saldo = (float)($pengeluaran_stats['total_pengeluaran_saldo'] ?? 0);
+    $total_semua_pengeluaran = (float)($pengeluaran_stats['total_semua_pengeluaran'] ?? 0);
+    $stmt_pengeluaran->close();
+} else {
+    $total_pengeluaran_cash = 0;
+    $total_pengeluaran_saldo = 0;
+    $total_semua_pengeluaran = 0;
+}
 
 // Hitung Sisa Bersih (Net)
 $sisa_cash = $stat_cash - $total_pengeluaran_cash;
@@ -185,15 +218,21 @@ $sisa_saldo = $stat_saldo - $total_pengeluaran_saldo;
 // -------------------------------------------------------------------------
 // 5. MEMBUAT LIST TRANSAKSI GABUNGAN (UNION) KRONOLOGIS
 // -------------------------------------------------------------------------
-$sql_union = "(SELECT id, tanggal, 'pendapatan' AS tipe, '-' AS info_metode, 'Pendapatan Omset Harian' AS keterangan, total_omset_hari AS nominal, JSON_OBJECT('total_cash_sales', total_cash_sales, 'total_dine_in', total_dine_in, 'total_take_away', total_take_away, 'total_online_order', total_online_order, 'total_qr_gopay', total_qr_gopay, 'total_edc', total_edc, 'total_online_payment', total_online_payment, 'total_transfers', total_transfers, 'total_shopeefood', total_shopeefood, 'total_gofood_gopay', total_gofood_gopay, 'total_ovo', total_ovo) AS detail_json FROM pendapatan_manual)
-              UNION 
-              (SELECT id, tanggal, 'pengeluaran' AS tipe, payment_method AS info_metode, deskripsi AS keterangan, total_harga AS nominal, JSON_OBJECT('no_pengeluaran', no_pengeluaran) AS detail_json FROM pengeluaran)
+$sql_union = "(SELECT id, tanggal, 'pendapatan' AS tipe, '-' AS info_metode, 'Pendapatan Omset Harian' AS keterangan, total_omset_hari AS nominal, JSON_OBJECT('total_cash_sales', total_cash_sales, 'total_dine_in', total_dine_in, 'total_take_away', total_take_away, 'total_online_order', total_online_order, 'total_qr_gopay', total_qr_gopay, 'total_edc', total_edc, 'total_online_payment', total_online_payment, 'total_transfers', total_transfers, 'total_shopeefood', total_shopeefood, 'total_gofood_gopay', total_gofood_gopay, 'total_ovo', total_ovo) AS detail_json FROM pendapatan_manual WHERE tanggal BETWEEN ? AND ?)
+              UNION
+              (SELECT id, tanggal, 'pengeluaran' AS tipe, payment_method AS info_metode, deskripsi AS keterangan, total_harga AS nominal, JSON_OBJECT('no_pengeluaran', no_pengeluaran) AS detail_json FROM pengeluaran WHERE tanggal BETWEEN ? AND ?)
               ORDER BY tanggal DESC, id DESC LIMIT 100";
 
-$query_list = $db->query($sql_union);
+$stmt_list = $db->prepare($sql_union);
 $all_transactions = [];
-if ($query_list) {
-    while($r = $query_list->fetch_assoc()) { $all_transactions[] = $r; }
+if ($stmt_list) {
+    $stmt_list->bind_param('ssss', $start, $end, $start, $end);
+    $stmt_list->execute();
+    $query_list = $stmt_list->get_result();
+    if ($query_list) {
+        while($r = $query_list->fetch_assoc()) { $all_transactions[] = $r; }
+    }
+    $stmt_list->close();
 }
 
 // Ambil data edit pendapatan jika ada parameter edit_id
@@ -214,7 +253,7 @@ if (isset($_GET['edit_id'])) {
 bo_render_shell_start([
     'title' => 'Manajemen Transaksi Kas - MINVEN',
     'page_title' => 'Arus Transaksi Keuangan',
-    'page_subtitle' => 'Pusat integrasi rekaman pendapatan (Omset) dan pengeluaran kas operasional.',
+    'page_subtitle' => 'Pusat integrasi rekaman pendapatan (Omset) dan pengeluaran kas operasional. Periode: ' . date('d M Y', strtotime($start)) . ' - ' . date('d M Y', strtotime($end)),
     'active' => 'reports-income'
 ]);
 ?>
@@ -234,7 +273,25 @@ bo_render_shell_start([
     <?php endif; ?>
 
     <?php if (!isset($_GET['add_pendapatan']) && !isset($_GET['add_pengeluaran']) && !$edit_data): ?>
-        
+
+        <!-- Filter Tanggal -->
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+            <div class="card-body p-3">
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Tanggal Mulai</label>
+                        <input type="date" class="form-control" name="start" value="<?= htmlspecialchars($start) ?>" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Tanggal Akhir</label>
+                        <input type="date" class="form-control" name="end" value="<?= htmlspecialchars($end) ?>" required>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-2"></i>Terapkan Filter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
 
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -246,13 +303,13 @@ bo_render_shell_start([
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2" aria-labelledby="dropdownTambahTransaksi">
                     <li>
-                        <a class="dropdown-menu-item dropdown-item rounded py-2" href="?add_pendapatan=true">
+                        <a class="dropdown-menu-item dropdown-item rounded py-2" href="?add_pendapatan=true&start=<?= htmlspecialchars($start) ?>&end=<?= htmlspecialchars($end) ?>">
                             <i class="bi bi-graph-up-arrow text-success me-2"></i> <strong>Pendapatan Baru</strong>
                         </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
-                        <a class="dropdown-menu-item dropdown-item rounded py-2" href="?add_pengeluaran=true">
+                        <a class="dropdown-menu-item dropdown-item rounded py-2" href="?add_pengeluaran=true&start=<?= htmlspecialchars($start) ?>&end=<?= htmlspecialchars($end) ?>">
                             <i class="bi bi-graph-down-arrow text-danger me-2"></i> <strong>Pengeluaran Baru</strong>
                         </a>
                     </li>
@@ -280,7 +337,26 @@ bo_render_shell_start([
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($all_transactions as $row): ?>
-                                    <tr>
+                                    <?php
+                                    // Cek apakah omset sesuai dengan komponen
+                                    $omset_sesuai = true;
+                                    $show_warning = false;
+                                    if ($row['tipe'] === 'pendapatan') {
+                                        $detail = json_decode($row['detail_json'], true);
+                                        if ($detail) {
+                                            $total_pesanan = ($detail['total_dine_in'] ?? 0) + ($detail['total_take_away'] ?? 0) + ($detail['total_online_order'] ?? 0);
+                                            $total_pembayaran = ($detail['total_cash_sales'] ?? 0) + ($detail['total_qr_gopay'] ?? 0) + ($detail['total_edc'] ?? 0) + ($detail['total_online_payment'] ?? 0) + ($detail['total_transfers'] ?? 0) + ($detail['total_shopeefood'] ?? 0) + ($detail['total_gofood_gopay'] ?? 0) + ($detail['total_ovo'] ?? 0);
+                                            $total_omset = (float)$row['nominal'];
+
+                                            // Cek apakah salah satu komponen tidak sesuai
+                                            if (abs($total_pesanan - $total_omset) > 0.01 || abs($total_pembayaran - $total_omset) > 0.01) {
+                                                $omset_sesuai = false;
+                                                $show_warning = true;
+                                            }
+                                        }
+                                    }
+                                    ?>
+                                    <tr <?= $show_warning ? 'class="table-warning"' : '' ?>>
                                         <td class="ps-4 fw-bold text-secondary"><?= date('d M Y', strtotime($row['tanggal'])) ?></td>
                                         <td>
                                             <?php if($row['tipe'] === 'pendapatan'): ?>
@@ -294,16 +370,19 @@ bo_render_shell_start([
                                         </td>
                                         <td class="text-end fw-bold <?= $row['tipe'] === 'pendapatan' ? 'text-success' : 'text-danger' ?>">
                                             <?= $row['tipe'] === 'pendapatan' ? '+' : '-' ?> Rp <?= number_format($row['nominal'], 0, ',', '.') ?>
+                                            <?php if ($show_warning): ?>
+                                                <i class="bi bi-exclamation-triangle-fill text-warning ms-1" title="Omset tidak sesuai dengan komponen pesanan/pembayaran"></i>
+                                            <?php endif; ?>
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 <?php if($row['tipe'] === 'pendapatan'): ?>
                                                     <button type="button" class="btn btn-sm btn-outline-secondary" onclick="bukaModalDetail(<?= htmlspecialchars($row['detail_json']) ?>, '<?= $row['tanggal'] ?>', '<?= $row['nominal'] ?>')" title="Lihat Rincian Pendapatan"><i class="bi bi-eye"></i></button>
-                                                    <a href="?edit_id=<?= $row['id'] ?>" class="btn btn-sm btn-outline-primary" title="Ubah Data Pendapatan"><i class="bi bi-pencil"></i></a>
+                                                    <a href="?edit_id=<?= $row['id'] ?>&start=<?= htmlspecialchars($start) ?>&end=<?= htmlspecialchars($end) ?>" class="btn btn-sm btn-outline-primary" title="Ubah Data Pendapatan"><i class="bi bi-pencil"></i></a>
                                                 <?php else: ?>
                                                     <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Pengeluaran Terkunci Sistem"><i class="bi bi-receipt"></i></button>
                                                 <?php endif; ?>
-                                                <a href="?action=delete&type=<?= $row['tipe'] ?>&id=<?= $row['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus data transaksi <?= $row['tipe'] ?> ini?')" title="Hapus"><i class="bi bi-trash"></i></a>
+                                                <a href="?action=delete&type=<?= $row['tipe'] ?>&id=<?= $row['id'] ?>&start=<?= htmlspecialchars($start) ?>&end=<?= htmlspecialchars($end) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus data transaksi <?= $row['tipe'] ?> ini?')" title="Hapus"><i class="bi bi-trash"></i></a>
                                             </div>
                                         </td>
                                     </tr>
@@ -317,7 +396,7 @@ bo_render_shell_start([
 
     <?php elseif (isset($_GET['add_pengeluaran'])): ?>
         <div class="d-flex align-items-center mb-4">
-            <a href="transaksi.php" class="btn btn-sm btn-secondary me-2"><i class="bi bi-arrow-left"></i> Kembali</a>
+            <a href="transaksi.php?start=<?= htmlspecialchars($start) ?>&end=<?= htmlspecialchars($end) ?>" class="btn btn-sm btn-secondary me-2"><i class="bi bi-arrow-left"></i> Kembali</a>
             <h4 class="mb-0 fw-bold">Tambah Pengeluaran Kas Baru</h4>
         </div>
 
@@ -325,6 +404,8 @@ bo_render_shell_start([
             <div class="card-body p-4">
                 <form method="POST" action="transaksi.php">
                     <input type="hidden" name="action" value="save_pengeluaran">
+                    <input type="hidden" name="start" value="<?= htmlspecialchars($start) ?>">
+                    <input type="hidden" name="end" value="<?= htmlspecialchars($end) ?>">
                     <div class="row g-3">
                         <div class="col-12 col-md-4">
                             <label class="form-label small fw-bold">Tanggal Pengeluaran</label>
@@ -346,7 +427,7 @@ bo_render_shell_start([
                             <input type="text" class="form-control" name="deskripsi" placeholder="Contoh: Pembelian Bahan Baku Es Batu, Bayar Token Listrik..." required>
                         </div>
                         <div class="col-12 text-end pt-2">
-                            <a href="transaksi.php" class="btn btn-light border px-4">Batal</a>
+                            <a href="transaksi.php?start=<?= htmlspecialchars($start) ?>&end=<?= htmlspecialchars($end) ?>" class="btn btn-light border px-4">Batal</a>
                             <button type="submit" class="btn btn-danger px-5 fw-bold shadow-sm"><i class="bi bi-plus-lg me-1"></i> Catat Pengeluaran</button>
                         </div>
                     </div>
@@ -364,14 +445,16 @@ bo_render_shell_start([
         ];
         ?>
         <div class="d-flex align-items-center mb-3">
-            <a href="transaksi.php" class="btn btn-sm btn-secondary me-2"><i class="bi bi-arrow-left"></i> Kembali</a>
+            <a href="transaksi.php?start=<?= htmlspecialchars($start) ?>&end=<?= htmlspecialchars($end) ?>" class="btn btn-sm btn-secondary me-2"><i class="bi bi-arrow-left"></i> Kembali</a>
             <h4 class="mb-0 fw-bold"><?= $d['id'] > 0 ? 'Edit Rekaman Pendapatan Tanggal ' . $d['tanggal'] : 'Input Rekaman Pendapatan Baru' ?></h4>
         </div>
 
         <form id="formPendapatan" method="POST" action="transaksi.php">
             <input type="hidden" name="action" value="save_pendapatan">
             <input type="hidden" name="id" value="<?= $d['id'] ?>">
-            
+            <input type="hidden" name="start" value="<?= htmlspecialchars($start) ?>">
+            <input type="hidden" name="end" value="<?= htmlspecialchars($end) ?>">
+
             <div class="row g-4">
                 <div class="col-12 col-md-4">
                     <div class="card h-100 border-0 shadow-sm">
@@ -447,7 +530,7 @@ bo_render_shell_start([
 
             <div class="row mt-4">
                 <div class="col-12 text-end">
-                    <a href="transaksi.php" class="btn btn-light border px-4 py-2 me-2">Batal</a>
+                    <a href="transaksi.php?start=<?= htmlspecialchars($start) ?>&end=<?= htmlspecialchars($end) ?>" class="btn btn-light border px-4 py-2 me-2">Batal</a>
                     <button type="button" class="btn btn-success px-5 py-2 fw-bold shadow-sm" onclick="submitFinalForm()">
                         <i class="bi bi-cloud-arrow-up-fill me-2"></i> Simpan Record Omset
                     </button>
@@ -491,7 +574,7 @@ bo_render_shell_start([
   </div>
 </div>
 
-<?php 
+<?php
 // EMBED LOGIC SCRIPTS JAVASCRIPT
 $jsScripts = '
 <script>
@@ -506,11 +589,11 @@ function formatRupiah(angka) {
 const targetHargaInput = document.getElementById("total_harga_pengeluaran");
 if(targetHargaInput) {
     targetHargaInput.addEventListener("input", function(e) {
-        let number_string = this.value.replace(/[^,\\d]/g, "").toString();
+        let number_string = this.value.replace(/[^,0-9]/g, "").toString();
         let split = number_string.split(",");
         let sisa = split[0].length % 3;
         let rupiah = split[0].substr(0, sisa);
-        let ribuan = split[0].substr(sisa).match(/\\d{3}/gi);
+        let ribuan = split[0].substr(sisa).match(/[0-9]{3}/gi);
         if (ribuan) {
             let separator = sisa ? "." : "";
             rupiah += separator + ribuan.join(".");
@@ -549,7 +632,7 @@ function validasiKomponen(tipe) {
 
     let subtotal = 0;
     let namaSeksi = (tipe === "pesanan") ? "Jenis Pesanan" : "Komponen Pembayaran";
-    
+
     if (tipe === "pesanan") {
         document.querySelectorAll(".hitung-pesanan").forEach(i => subtotal += (parseFloat(i.value) || 0));
     } else {
@@ -566,18 +649,24 @@ function validasiKomponen(tipe) {
         if (tipe === "pesanan") validasiPesananOk = true;
         if (tipe === "pembayaran") validasiPembayaranOk = true;
         headerBg.className = "modal-header bg-success text-white";
-        iconDiv.innerHTML = \'<i class="bi bi-check-circle-fill text-success"></i>\';
+        iconDiv.innerHTML = "";
+        const iconSuccess = document.createElement("i");
+        iconSuccess.className = "bi bi-check-circle-fill text-success";
+        iconDiv.appendChild(iconSuccess);
         titleStatus.innerText = "Kombinasi Sesuai";
-        bodyText.innerHTML = `Jumlah input data <strong>${namaSeksi}</strong> akurat & balance dengan nilai Omset Utama (${formatRupiah(omset)}).`;
+        bodyText.innerHTML = "Jumlah input data <strong>" + namaSeksi + "</strong> akurat & balance dengan nilai Omset Utama (" + formatRupiah(omset) + ").";
     } else {
         if (tipe === "pesanan") validasiPesananOk = false;
         if (tipe === "pembayaran") validasiPembayaranOk = false;
         const diff = subtotal - omset;
-        const strDiff = diff > 0 ? `Kelebihan input ${formatRupiah(diff)}` : `Kekurangan input ${formatRupiah(Math.abs(diff))}`;
+        const strDiff = diff > 0 ? "Kelebihan input " + formatRupiah(diff) : "Kekurangan input " + formatRupiah(Math.abs(diff));
         headerBg.className = "modal-header bg-danger text-white";
-        iconDiv.innerHTML = \'<i class="bi bi-exclamation-circle-fill text-danger"></i>\';
+        iconDiv.innerHTML = "";
+        const iconError = document.createElement("i");
+        iconError.className = "bi bi-exclamation-circle-fill text-danger";
+        iconDiv.appendChild(iconError);
         titleStatus.innerText = "Nilai Belum Cocok!";
-        bodyText.innerHTML = `Akumulasi input <strong>${namaSeksi}</strong> adalah ${formatRupiah(subtotal)}.<br>Terjadi Deviasi <strong>(${strDiff})</strong> terhadap nominal target Omset Utama.`;
+        bodyText.innerHTML = "Akumulasi input <strong>" + namaSeksi + "</strong> adalah " + formatRupiah(subtotal) + ".<br>Terjadi Deviasi <strong>(" + strDiff + ")</strong> terhadap nominal target Omset Utama.";
     }
     modal.show();
 }
@@ -596,28 +685,156 @@ function submitFinalForm() {
 }
 
 function bukaModalDetail(data, tgl, total) {
-    let html = `
-        <table class="table table-bordered table-sm m-0 fs-7">
-            <tr class="table-dark"><th colspan="2">Informasi Utama Rekap</th></tr>
-            <tr><td width="40%">Tanggal Rekam</td><td><strong>\${tgl}</strong></td></tr>
-            <tr><td>Total Omset (Gross)</td><td class="text-success fw-bold">\${formatRupiah(total)}</td></tr>
-            
-            <tr class="table-light"><th colspan="2" class="fw-bold text-info"><i class="bi bi-tag me-1"></i>Distribusi Pesanan</th></tr>
-            <tr><td>Dine In</td><td>\${formatRupiah(data.total_dine_in)}</td></tr>
-            <tr><td>Take Away</td><td>\${formatRupiah(data.total_take_away)}</td></tr>
-            <tr><td>Online Order</td><td>\${formatRupiah(data.total_online_order)}</td></tr>
+    // Hitung total komponen
+    const totalPesanan = (data.total_dine_in || 0) + (data.total_take_away || 0) + (data.total_online_order || 0);
+    const totalPembayaran = (data.total_cash_sales || 0) + (data.total_qr_gopay || 0) + (data.total_edc || 0) + (data.total_online_payment || 0) + (data.total_transfers || 0) + (data.total_shopeefood || 0) + (data.total_gofood_gopay || 0) + (data.total_ovo || 0);
 
-            <tr class="table-light"><th colspan="2" class="fw-bold text-warning text-dark"><i class="bi bi-credit-card me-1"></i>Penerimaan Dana</th></tr>
-            <tr><td>Cash Sales</td><td><strong>\${formatRupiah(data.total_cash_sales)}</strong></td></tr>
-            <tr><td>QR GoPay</td><td>\${formatRupiah(data.total_qr_gopay)}</td></tr>
-            <tr><td>EDC Mesin</td><td>\${formatRupiah(data.total_edc)}</td></tr>
-            <tr><td>Bank Transfers</td><td>\${formatRupiah(data.total_transfers)}</td></tr>
-            <tr><td>ShopeeFood</td><td>\${formatRupiah(data.total_shopeefood)}</td></tr>
-            <tr><td>GoFood GoPay</td><td>\${formatRupiah(data.total_gofood_gopay)}</td></tr>
-            <tr><td>OVO Wallet</td><td>\${formatRupiah(data.total_ovo)}</td></tr>
-        </table>
-    `;
-    document.getElementById("modalDetailBody").innerHTML = html;
+    // Cek kesesuaian
+    const pesananSesuai = Math.abs(totalPesanan - total) < 0.01;
+    const pembayaranSesuai = Math.abs(totalPembayaran - total) < 0.01;
+
+    // Gunakan createElement untuk menghindari keyword PHP
+    const modalBody = document.getElementById("modalDetailBody");
+    modalBody.innerHTML = "";
+
+    const table = document.createElement("table");
+    table.className = "table table-bordered table-sm m-0 fs-7";
+
+    // Header Info
+    const tr1 = document.createElement("tr");
+    tr1.className = "table-dark";
+    const th1 = document.createElement("th");
+    th1.colSpan = 2;
+    th1.textContent = "Informasi Utama Rekap";
+    tr1.appendChild(th1);
+    table.appendChild(tr1);
+
+    const tr2 = document.createElement("tr");
+    const td2a = document.createElement("td");
+    td2a.style.width = "40%";
+    td2a.textContent = "Tanggal Rekam";
+    const td2b = document.createElement("td");
+    const strong2 = document.createElement("strong");
+    strong2.textContent = tgl;
+    td2b.appendChild(strong2);
+    tr2.appendChild(td2a);
+    tr2.appendChild(td2b);
+    table.appendChild(tr2);
+
+    const tr3 = document.createElement("tr");
+    const td3a = document.createElement("td");
+    td3a.textContent = "Total Omset (Gross)";
+    const td3b = document.createElement("td");
+    td3b.className = "text-success fw-bold";
+    td3b.textContent = formatRupiah(total);
+    tr3.appendChild(td3a);
+    tr3.appendChild(td3b);
+    table.appendChild(tr3);
+
+    // Distribusi Pesanan
+    const tr4 = document.createElement("tr");
+    tr4.className = "table-light";
+    const th4 = document.createElement("th");
+    th4.colSpan = 2;
+    th4.className = "fw-bold text-info";
+    const icon4 = document.createElement("i");
+    icon4.className = "bi bi-tag me-1";
+    th4.appendChild(icon4);
+    th4.appendChild(document.createTextNode("Distribusi Pesanan"));
+    tr4.appendChild(th4);
+    table.appendChild(tr4);
+
+    const tr5 = document.createElement("tr");
+    tr5.innerHTML = "<td>Dine In</td><td>" + formatRupiah(data.total_dine_in) + "</td>";
+    table.appendChild(tr5);
+
+    const tr6 = document.createElement("tr");
+    tr6.innerHTML = "<td>Take Away</td><td>" + formatRupiah(data.total_take_away) + "</td>";
+    table.appendChild(tr6);
+
+    const tr7 = document.createElement("tr");
+    tr7.innerHTML = "<td>Online Order</td><td>" + formatRupiah(data.total_online_order) + "</td>";
+    table.appendChild(tr7);
+
+    const tr8 = document.createElement("tr");
+    tr8.className = pesananSesuai ? "table-success" : "table-warning";
+    const td8a = document.createElement("td");
+    td8a.className = "fw-bold";
+    td8a.textContent = "Total Pesanan";
+    const td8b = document.createElement("td");
+    td8b.className = "fw-bold";
+    td8b.textContent = formatRupiah(totalPesanan) + " ";
+    const icon8 = document.createElement("i");
+    icon8.className = pesananSesuai ? "bi bi-check-circle-fill text-success" : "bi bi-exclamation-triangle-fill text-warning";
+    td8b.appendChild(icon8);
+    tr8.appendChild(td8a);
+    tr8.appendChild(td8b);
+    table.appendChild(tr8);
+
+    // Penerimaan Dana
+    const tr9 = document.createElement("tr");
+    tr9.className = "table-light";
+    const th9 = document.createElement("th");
+    th9.colSpan = 2;
+    th9.className = "fw-bold text-warning text-dark";
+    const icon9 = document.createElement("i");
+    icon9.className = "bi bi-credit-card me-1";
+    th9.appendChild(icon9);
+    th9.appendChild(document.createTextNode("Penerimaan Dana"));
+    tr9.appendChild(th9);
+    table.appendChild(tr9);
+
+    const tr10 = document.createElement("tr");
+    const td10a = document.createElement("td");
+    td10a.textContent = "Cash Sales";
+    const td10b = document.createElement("td");
+    const strong10 = document.createElement("strong");
+    strong10.textContent = formatRupiah(data.total_cash_sales);
+    td10b.appendChild(strong10);
+    tr10.appendChild(td10a);
+    tr10.appendChild(td10b);
+    table.appendChild(tr10);
+
+    const tr11 = document.createElement("tr");
+    tr11.innerHTML = "<td>QR GoPay</td><td>" + formatRupiah(data.total_qr_gopay) + "</td>";
+    table.appendChild(tr11);
+
+    const tr12 = document.createElement("tr");
+    tr12.innerHTML = "<td>EDC Mesin</td><td>" + formatRupiah(data.total_edc) + "</td>";
+    table.appendChild(tr12);
+
+    const tr13 = document.createElement("tr");
+    tr13.innerHTML = "<td>Bank Transfers</td><td>" + formatRupiah(data.total_transfers) + "</td>";
+    table.appendChild(tr13);
+
+    const tr14 = document.createElement("tr");
+    tr14.innerHTML = "<td>ShopeeFood</td><td>" + formatRupiah(data.total_shopeefood) + "</td>";
+    table.appendChild(tr14);
+
+    const tr15 = document.createElement("tr");
+    tr15.innerHTML = "<td>GoFood GoPay</td><td>" + formatRupiah(data.total_gofood_gopay) + "</td>";
+    table.appendChild(tr15);
+
+    const tr16 = document.createElement("tr");
+    tr16.innerHTML = "<td>OVO Wallet</td><td>" + formatRupiah(data.total_ovo) + "</td>";
+    table.appendChild(tr16);
+
+    const tr17 = document.createElement("tr");
+    tr17.className = pembayaranSesuai ? "table-success" : "table-warning";
+    const td17a = document.createElement("td");
+    td17a.className = "fw-bold";
+    td17a.textContent = "Total Pembayaran";
+    const td17b = document.createElement("td");
+    td17b.className = "fw-bold";
+    td17b.textContent = formatRupiah(totalPembayaran) + " ";
+    const icon17 = document.createElement("i");
+    icon17.className = pembayaranSesuai ? "bi bi-check-circle-fill text-success" : "bi bi-exclamation-triangle-fill text-warning";
+    td17b.appendChild(icon17);
+    tr17.appendChild(td17a);
+    tr17.appendChild(td17b);
+    table.appendChild(tr17);
+
+    modalBody.appendChild(table);
     const modal = new bootstrap.Modal(document.getElementById("modalDetail"));
     modal.show();
 }

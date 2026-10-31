@@ -491,16 +491,17 @@ function formatRupiah($angka) {
                                     ?>
                                     <span class="badge <?= $badge_class ?> w-100"><?= $status_text ?></span>
                                 </td>
-                                <td class="photo-col"> <!-- Added Photo Column Data -->
-                                    <?php if (!empty($row['foto'])): ?>
-                                        <?php
-                                            // Construct the correct path to the image
-                                            // Assuming foto path is like 'uploads/po/filename.jpg'
-                                            // and index.php is in 'pembelian/po/'
-                                            $image_path = '../../' . htmlspecialchars($row['foto']);
-                                        ?>
-                                        <a href="<?= $image_path ?>" target="_blank" title="Lihat Foto">
-                                            <img src="<?= $image_path ?>" alt="Foto PO" class="img-thumbnail">
+                                <td class="photo-col">
+                                    <?php
+                                        $poFotoRel = str_replace('\\', '/', (string)($row['foto'] ?? ''));
+                                        $poFotoRel = ltrim($poFotoRel, '/');
+                                        $poFotoFile = strpos($poFotoRel, 'uploads/po/') === 0 ? basename($poFotoRel) : '';
+                                        $poFotoFsPath = $poFotoFile ? __DIR__ . '/../../uploads/po/' . $poFotoFile : '';
+                                        $poFotoUrl = $poFotoFile ? '../../uploads/po/' . rawurlencode($poFotoFile) : '';
+                                    ?>
+                                    <?php if ($poFotoFile !== '' && is_file($poFotoFsPath)): ?>
+                                        <a href="<?= htmlspecialchars($poFotoUrl) ?>" target="_blank" rel="noopener" title="Lihat Foto">
+                                            <img src="<?= htmlspecialchars($poFotoUrl) ?>" alt="Foto PO" class="img-thumbnail">
                                         </a>
                                     <?php else: ?>
                                         -

@@ -47,65 +47,31 @@ if ($po['status'] !== 'completed') {
     exit();
 }
 
-$ensure_split_table = function() use ($conn) {
-    $res = $conn->query("SHOW TABLES LIKE 'po_stock_split'");
+$table_exists = function($table) use ($conn) {
+    $escaped_table = $conn->real_escape_string($table);
+    $res = $conn->query("SHOW TABLES LIKE '{$escaped_table}'");
     if ($res instanceof mysqli_result) {
         $exists = $res->num_rows > 0;
         $res->free();
-        if ($exists) {
-            if (!db_has_column($conn, 'po_stock_split', 'split_barang_id')) {
-                $conn->query("ALTER TABLE po_stock_split ADD COLUMN split_barang_id INT(11) DEFAULT NULL AFTER detail_purchase_order_id");
-                $conn->query("ALTER TABLE po_stock_split ADD KEY idx_split_barang (split_barang_id)");
-            }
-            return true;
-        }
+        return $exists;
     }
-    $sql = "CREATE TABLE IF NOT EXISTS po_stock_split (
-        id INT(11) NOT NULL AUTO_INCREMENT,
-        purchase_order_id INT(11) NOT NULL,
-        detail_purchase_order_id INT(11) NOT NULL,
-        split_barang_id INT(11) DEFAULT NULL,
-        detail_barang VARCHAR(255) NOT NULL,
-        qty_output INT(11) NOT NULL DEFAULT 0,
-        created_by INT(11) DEFAULT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT current_timestamp(),
-        PRIMARY KEY (id),
-        KEY idx_po (purchase_order_id),
-        KEY idx_dpo (detail_purchase_order_id),
-        KEY idx_split_barang (split_barang_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
-    return $conn->query($sql) === true;
+    return false;
 };
 
-$ensure_conversi_table = function() use ($conn) {
-    $res = $conn->query("SHOW TABLES LIKE 'conversi_po_detail'");
-    if ($res instanceof mysqli_result) {
-        $exists = $res->num_rows > 0;
-        $res->free();
-        if ($exists) return true;
-    }
-    $sql = "CREATE TABLE IF NOT EXISTS conversi_po_detail (
-        id INT(11) NOT NULL AUTO_INCREMENT,
-        purchase_order_id INT(11) NOT NULL,
-        detail_purchase_order_id INT(11) NOT NULL,
-        satuan_asal_id INT(11) DEFAULT NULL,
-        satuan_tujuan_id INT(11) DEFAULT NULL,
-        nilai_konversi DECIMAL(10,2) DEFAULT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT current_timestamp(),
-        updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-        PRIMARY KEY (id),
-        KEY idx_po (purchase_order_id),
-        KEY idx_dpo (detail_purchase_order_id),
-        KEY idx_satuan_asal (satuan_asal_id),
-        KEY idx_satuan_tujuan (satuan_tujuan_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
-    return $conn->query($sql) === true;
-};
-
-$ensure_conversi_table();
+$has_split_table = $table_exists('po_stock_split');
+$has_split_barang_id = $has_split_table && db_has_column($conn, 'po_stock_split', 'split_barang_id');
+$has_conversi_table = $table_exists('conversi_po_detail');
 
 $status_col_exists = db_has_column($conn, 'detail_purchase_order', 'status');
 $status_condition = $status_col_exists ? "AND (dpo.status IS NULL OR dpo.status != 'rejected')" : "";
+$conversion_select = $has_conversi_table ? 'cpd.nilai_konversi' : 'NULL AS nilai_konversi';
+$conversion_join = $has_conversi_table
+    ? 'LEFT JOIN conversi_po_detail cpd ON dpo.id = cpd.detail_purchase_order_id'
+    : '';
+$conversion_satuan_select = $has_conversi_table ? 's1.nama_satuan AS satuan_asal' : 'NULL AS satuan_asal';
+$conversion_satuan_join = $has_conversi_table
+    ? 'LEFT JOIN satuan s1 ON cpd.satuan_asal_id = s1.id'
+    : '';
 
 $sql = "SELECT
             dpo.id AS detail_id,
@@ -115,13 +81,13 @@ $sql = "SELECT
             b.kode_barang,
             b.nama_barang,
             s.nama_satuan AS satuan_dasar,
-            s1.nama_satuan AS satuan_asal,
-            cpd.nilai_konversi
+            $conversion_satuan_select,
+            $conversion_select
         FROM detail_purchase_order dpo
         LEFT JOIN barang b ON dpo.barang_id = b.id
         LEFT JOIN satuan s ON b.satuan_id = s.id
-        LEFT JOIN conversi_po_detail cpd ON dpo.id = cpd.detail_purchase_order_id
-        LEFT JOIN satuan s1 ON cpd.satuan_asal_id = s1.id
+        $conversion_join
+        $conversion_satuan_join
         WHERE dpo.purchase_order_id = ?
           $status_condition
         ORDER BY b.kode_barang, dpo.id";
@@ -156,12 +122,17 @@ if ($res) {
 $stmt->close();
 
 $splitsByDetail = [];
-if ($ensure_split_table()) {
-    $stmt_s = $conn->prepare("SELECT ps.id, ps.detail_purchase_order_id, ps.split_barang_id, ps.detail_barang, ps.qty_output,
-                                     b.kode_barang, b.nama_barang, s.nama_satuan AS satuan
+$split_barang_select = $has_split_barang_id
+    ? 'ps.split_barang_id, b.kode_barang, b.nama_barang, s.nama_satuan AS satuan'
+    : 'NULL AS split_barang_id, NULL AS kode_barang, NULL AS nama_barang, NULL AS satuan';
+$split_barang_join = $has_split_barang_id
+    ? 'LEFT JOIN barang b ON ps.split_barang_id = b.id
+       LEFT JOIN satuan s ON b.satuan_id = s.id'
+    : '';
+if ($has_split_table) {
+    $stmt_s = $conn->prepare("SELECT ps.id, ps.detail_purchase_order_id, $split_barang_select, ps.detail_barang, ps.qty_output
                               FROM po_stock_split ps
-                              LEFT JOIN barang b ON ps.split_barang_id = b.id
-                              LEFT JOIN satuan s ON b.satuan_id = s.id
+                              $split_barang_join
                               WHERE ps.purchase_order_id = ?
                               ORDER BY ps.detail_purchase_order_id, ps.id");
     if ($stmt_s) {

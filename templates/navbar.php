@@ -183,7 +183,13 @@ if ($sidebar_profile_picture !== '') {
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="<?= htmlspecialchars(url_for('mobile_enhancement.css')) ?>">
+<?php
+// Hitung depth dari current script ke root
+$scriptPath = $_SERVER['PHP_SELF'];
+$depth = substr_count($scriptPath, '/') - 1;
+$relativePath = str_repeat('../', $depth);
+?>
+<link rel="stylesheet" href="<?= $relativePath ?>mobile_enhancement.css">
 <link rel="shortcut icon" type="image/png" href="<?= htmlspecialchars(url_for('asset/LOGO1.png')) ?>">
 <link rel="apple-touch-icon" href="<?= htmlspecialchars(url_for('asset/LOGO1.png')) ?>">
 

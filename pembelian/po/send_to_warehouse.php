@@ -3,11 +3,23 @@ session_start();
 require_once '../../config.php';
 require_once '../../includes/access_check.php';
 
+// Set timeout yang lebih panjang untuk hosting
+set_time_limit(300); // 5 menit
+ini_set('max_execution_time', 300);
+ini_set('memory_limit', '256M');
+
 header('Content-Type: application/json; charset=utf-8');
 
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+    exit();
+}
+
+// Cek koneksi database
+if (!$conn || $conn->connect_error) {
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'Koneksi database gagal']);
     exit();
 }
 
@@ -81,6 +93,7 @@ function ensure_po_stock_split_table($conn) {
             return true;
         }
     }
+    // Tanpa foreign key constraints untuk hosting compatibility
     $sql = "CREATE TABLE IF NOT EXISTS po_stock_split (
         id INT(11) NOT NULL AUTO_INCREMENT,
         purchase_order_id INT(11) NOT NULL,
@@ -115,6 +128,7 @@ function ensure_conversi_po_table($conn) {
         $res->free();
         if ($exists) return true;
     }
+    // Tanpa foreign key constraints untuk hosting compatibility
     $sql = "CREATE TABLE IF NOT EXISTS conversi_po_detail (
         id INT(11) NOT NULL AUTO_INCREMENT,
         purchase_order_id INT(11) NOT NULL,
@@ -161,14 +175,19 @@ function parseRowId($raw) {
 ensure_po_stock_split_table($conn);
 
 try {
+    // Disable foreign key checks sementara untuk menghindari deadlock
+    $conn->query("SET FOREIGN_KEY_CHECKS=0");
+
     $conn->begin_transaction();
 
     $stmt_po = $conn->prepare("SELECT id, no_po, status FROM purchase_order WHERE id = ? FOR UPDATE");
     if (!$stmt_po) {
-        throw new Exception('Database error');
+        throw new Exception('Database error saat prepare PO: ' . $conn->error);
     }
     $stmt_po->bind_param('i', $po_id);
-    $stmt_po->execute();
+    if (!$stmt_po->execute()) {
+        throw new Exception('Database error saat execute PO: ' . $stmt_po->error);
+    }
     $po_res = $stmt_po->get_result();
     $po = $po_res ? $po_res->fetch_assoc() : null;
     $stmt_po->close();
@@ -178,7 +197,7 @@ try {
     }
 
     if ($po['status'] !== 'completed') {
-        throw new Exception('PO harus berstatus completed');
+        throw new Exception('PO harus berstatus completed. Status saat ini: ' . $po['status']);
     }
 
     $gudang_ids = [$gudang_1_id];
@@ -187,12 +206,14 @@ try {
     }
     $stmt_g = $conn->prepare("SELECT id FROM gudang WHERE id = ?");
     if (!$stmt_g) {
-        throw new Exception('Database error');
+        throw new Exception('Database error saat prepare gudang: ' . $conn->error);
     }
     foreach ($gudang_ids as $gid) {
         $gid = (int)$gid;
         $stmt_g->bind_param('i', $gid);
-        $stmt_g->execute();
+        if (!$stmt_g->execute()) {
+            throw new Exception('Database error saat execute gudang: ' . $stmt_g->error);
+        }
         $g_res = $stmt_g->get_result();
         if (!$g_res || $g_res->num_rows === 0) {
             $stmt_g->close();
@@ -212,10 +233,12 @@ try {
                     FOR UPDATE";
     $stmt_d = $conn->prepare($sql_details);
     if (!$stmt_d) {
-        throw new Exception('Database error');
+        throw new Exception('Database error saat prepare detail: ' . $conn->error);
     }
     $stmt_d->bind_param('i', $po_id);
-    $stmt_d->execute();
+    if (!$stmt_d->execute()) {
+        throw new Exception('Database error saat execute detail: ' . $stmt_d->error);
+    }
     $d_res = $stmt_d->get_result();
     $details = [];
     if ($d_res) {
@@ -249,7 +272,9 @@ try {
         $stmt_s = $conn->prepare("SELECT id, detail_purchase_order_id, split_barang_id, detail_barang, qty_output FROM po_stock_split WHERE purchase_order_id = ? ORDER BY detail_purchase_order_id, id");
         if ($stmt_s) {
             $stmt_s->bind_param('i', $po_id);
-            $stmt_s->execute();
+            if (!$stmt_s->execute()) {
+                throw new Exception('Database error saat execute split: ' . $stmt_s->error);
+            }
             $s_res = $stmt_s->get_result();
             if ($s_res) {
                 while ($s = $s_res->fetch_assoc()) {
@@ -385,20 +410,20 @@ try {
                    VALUES (?, ?, ?, 'masuk', ?, ?)";
     $stmt_header = $conn->prepare($sql_header);
     if (!$stmt_header) {
-        throw new Exception('Database error');
+        throw new Exception('Database error saat prepare header: ' . $conn->error);
     }
 
     $sql_detail = "INSERT INTO detail_transaksi_stok (transaksi_stok_id, barang_id, detail_barang, jumlah)
                    VALUES (?, ?, ?, ?)";
     $stmt_detail = $conn->prepare($sql_detail);
     if (!$stmt_detail) {
-        throw new Exception('Database error');
+        throw new Exception('Database error saat prepare detail: ' . $conn->error);
     }
 
     $sql_stok_check = "SELECT id FROM gudang_stok WHERE gudang_id = ? AND barang_id = ? AND detail_barang = ?";
     $stmt_stok_check = $conn->prepare($sql_stok_check);
     if (!$stmt_stok_check) {
-        throw new Exception('Database error');
+        throw new Exception('Database error saat prepare cek stok: ' . $conn->error);
     }
 
     $sql_stok_update = "UPDATE gudang_stok
@@ -407,14 +432,14 @@ try {
                         WHERE gudang_id = ? AND barang_id = ? AND detail_barang = ?";
     $stmt_stok_update = $conn->prepare($sql_stok_update);
     if (!$stmt_stok_update) {
-        throw new Exception('Database error');
+        throw new Exception('Database error saat prepare update stok: ' . $conn->error);
     }
 
     $sql_stok_insert = "INSERT INTO gudang_stok (gudang_id, barang_id, detail_barang, jumlah, stok_awal)
                         VALUES (?, ?, ?, ?, ?)";
     $stmt_stok_insert = $conn->prepare($sql_stok_insert);
     if (!$stmt_stok_insert) {
-        throw new Exception('Database error');
+        throw new Exception('Database error saat prepare insert stok: ' . $conn->error);
     }
 
     $created_transactions = [];
@@ -433,7 +458,7 @@ try {
 
         $stmt_header->bind_param('ssisi', $no_transaksi, $tanggal, $gid, $keterangan, $created_by);
         if (!$stmt_header->execute()) {
-            throw new Exception('Gagal membuat transaksi stok');
+            throw new Exception('Gagal membuat transaksi stok: ' . $stmt_header->error);
         }
         $transaksi_stok_id = (int)$conn->insert_id;
 
@@ -444,23 +469,23 @@ try {
 
             $stmt_detail->bind_param('iisi', $transaksi_stok_id, $barang_id, $detail_barang, $jumlah);
             if (!$stmt_detail->execute()) {
-                throw new Exception('Gagal menyimpan detail stok');
+                throw new Exception('Gagal menyimpan detail stok: ' . $stmt_detail->error);
             }
 
             $stmt_stok_check->bind_param('iis', $gid, $barang_id, $detail_barang);
             if (!$stmt_stok_check->execute()) {
-                throw new Exception('Gagal cek stok gudang');
+                throw new Exception('Gagal cek stok gudang: ' . $stmt_stok_check->error);
             }
             $stok_res = $stmt_stok_check->get_result();
             if ($stok_res && $stok_res->num_rows > 0) {
                 $stmt_stok_update->bind_param('iiiis', $jumlah, $jumlah, $gid, $barang_id, $detail_barang);
                 if (!$stmt_stok_update->execute()) {
-                    throw new Exception('Gagal update stok gudang');
+                    throw new Exception('Gagal update stok gudang: ' . $stmt_stok_update->error);
                 }
             } else {
                 $stmt_stok_insert->bind_param('iisii', $gid, $barang_id, $detail_barang, $jumlah, $jumlah);
                 if (!$stmt_stok_insert->execute()) {
-                    throw new Exception('Gagal insert stok gudang');
+                    throw new Exception('Gagal insert stok gudang: ' . $stmt_stok_insert->error);
                 }
             }
 
@@ -494,25 +519,29 @@ try {
     $sql_upd_po = "UPDATE purchase_order SET " . implode(', ', $updates) . " WHERE id = ? AND status = 'completed'";
     $stmt_upd = $conn->prepare($sql_upd_po);
     if (!$stmt_upd) {
-        throw new Exception('Database error');
+        throw new Exception('Database error saat prepare update PO: ' . $conn->error);
     }
     $bind_types .= 'i';
     $bind_values[] = $po_id;
 
     $stmt_upd->bind_param($bind_types, ...$bind_values);
     if (!$stmt_upd->execute()) {
-        throw new Exception('Gagal update status PO');
+        throw new Exception('Gagal update status PO: ' . $stmt_upd->error);
     }
     if ($stmt_upd->affected_rows === 0) {
         throw new Exception('Status PO berubah, silakan refresh');
     }
     $stmt_upd->close();
 
+    // Close all statements untuk membebaskan memory
     $stmt_header->close();
     $stmt_detail->close();
     $stmt_stok_check->close();
     $stmt_stok_update->close();
     $stmt_stok_insert->close();
+
+    // Re-enable foreign key checks
+    $conn->query("SET FOREIGN_KEY_CHECKS=1");
 
     $conn->commit();
 
@@ -525,6 +554,9 @@ try {
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit();
 } catch (Exception $e) {
+    // Re-enable foreign key checks in case of error
+    $conn->query("SET FOREIGN_KEY_CHECKS=1");
+
     $conn->rollback();
     http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
